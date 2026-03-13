@@ -11,6 +11,12 @@ const unwrapBody = (raw) => {
   return raw;
 };
 
+const joinApiUrl = (baseUrl, path) => {
+  const normalizedBaseUrl = baseUrl.replace(/\/+$/, '');
+  const normalizedPath = path.replace(/^\/+/, '');
+  return `${normalizedBaseUrl}/${normalizedPath}`;
+};
+
 const useStateWithRef = (initial) => {
   const [val, setVal] = useState(initial);
   const ref = useRef(initial);
@@ -324,7 +330,7 @@ const App = () => {
     setStatusText('Getting S3 upload credentials...');
 
     try {
-      const presignRes = await fetch(`${apiBaseUrl}/get-upload-url`);
+      const presignRes = await fetch(joinApiUrl(apiBaseUrl, 'get-upload-url'));
       if (!presignRes.ok) {
         const errorText = await presignRes.text();
         console.error("🚨 :", errorText);
@@ -347,8 +353,8 @@ const App = () => {
       const currentUserId = getOrCreateUserId();
       const isWithText = currentMode === 'with-text';
       const scoreEndpoint = isWithText
-        ? `${apiBaseUrl}/score`
-        : `${apiBaseUrl}${config.scoreFreeApiPath}`;
+        ? joinApiUrl(apiBaseUrl, 'score')
+        : joinApiUrl(apiBaseUrl, config.scoreFreeApiPath);
       const scorePayload = isWithText
         ? { fileName: file_name, referenceText: inputTextRef.current, userId: currentUserId }
         : { fileName: file_name, userId: currentUserId, topicText: currentTopic };
@@ -375,7 +381,7 @@ const App = () => {
         return;
       }
 
-      const recognizedSnapshot = scoreData.DisplayText || nbest.Display || nbest.Lexical || null;
+      const recognizedSnapshot = scoreData.RecognizedText || scoreData.DisplayText || nbest.Display || nbest.Lexical || null;
       setRecognizedText(recognizedSnapshot);
       setScoreResult({
         accuracy: nbest.AccuracyScore || 0,
@@ -403,7 +409,7 @@ const App = () => {
   };
 
   const requestAiTutor = async ({ userId, recognizedText, mode }) => {
-    const res = await fetch(`${config.apiBaseUrl}/ai-tutor`, {
+    const res = await fetch(joinApiUrl(config.apiBaseUrl, 'ai-tutor'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, recognizedText, mode }),
@@ -455,7 +461,7 @@ const App = () => {
     // ==========================================
     // Parallel task B: call genVoice to obtain cloned recording (concurrent)
     // ==========================================
-    fetch(`${config.apiBaseUrl}/gen-voice`, {
+    fetch(joinApiUrl(config.apiBaseUrl, 'gen-voice'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

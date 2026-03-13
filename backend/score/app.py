@@ -2,7 +2,7 @@ import json
 import base64
 import urllib.request
 import urllib.error
-import boto3# type: ignore
+import boto3  # type: ignore
 import os
 import time  # For generating timestamps
 
@@ -14,13 +14,16 @@ def lambda_handler(event, context):
     try:
         # 1. Parse frontend data (redundant code cleaned)
         body = json.loads(event.get('body', '{}'))
-        file_name = body.get('fileName')
-        reference_text = body.get('referenceText')
         user_id = body.get('userId')  # Rocket Get directly
+        file_name = body.get('fileName')
 
-        if not file_name or not reference_text or not user_id:
-            return build_response(400, {"error": "Missing fileName, referenceText or userId parameters"})
+        reference_text = body.get('referenceText')
 
+        topic_text = body.get('topicText')
+        effective_reference_text = reference_text if reference_text else f"Topic: {topic_text}"
+        if not file_name or not user_id:
+            return build_response(400, {"error": "Missing fileName or userId parameters"})
+        
         # 2. Read configuration from environment variables
         bucket_name = os.environ['S3_BUCKET_NAME']
         speech_key = os.environ['SPEECH_KEY']
@@ -33,12 +36,13 @@ def lambda_handler(event, context):
 
         # 4. Construct Header
         pronAssessmentParamsJson = json.dumps({
-            "ReferenceText": reference_text,
+            "ReferenceText": reference_text, 
             "GradingSystem": "HundredMark",
             "Granularity": "Phoneme",
             "Dimension": "Comprehensive",
-            "Format": "Detailed"  # Rocket Extremely critical: Force detailed report in request header!
+            "Format": "Detailed"
         })
+
         pronAssessmentHeader = base64.b64encode(pronAssessmentParamsJson.encode('utf-8')).decode('utf-8')
 
         # 5. Rocket Core fix 1: Add &format=detailed to force Azure to return word and phoneme details!
@@ -64,16 +68,20 @@ def lambda_handler(event, context):
             try:
                 # Extract core data
                 nbest = result_json.get('NBest', [{}])[0]
+                recognized_text = (
+                    result_json.get('DisplayText')
+                    or nbest.get('Display')
+                    or nbest.get('Lexical')
+                    or ''
+                )
 
-                # Rocket Fix: Get scores directly, don't nest values anymore!
                 pron_score = nbest.get('PronScore', 0)
                 words_data = nbest.get('Words', [])
 
                 weak_words = []
-                weak_phonemes = set() # 用 set 自动去重更优雅
-                phoneme_scores_map = {} # 🚀 新增：专门记录每个音素在本句话的最低分
+                weak_phonemes = set()
+                phoneme_scores_map = {} 
 
-                # 遍历所有单词和音素，找出弱项并记录最低分
                 for word_obj in words_data:
                     word_score = word_obj.get('AccuracyScore', 100)
                     if word_score < 80:
@@ -83,29 +91,24 @@ def lambda_handler(event, context):
                         p = phoneme_obj.get('Phoneme', '')
                         p_score = phoneme_obj.get('AccuracyScore', 100)
                         
-                        # 记录低于 80 分的弱势音素
                         if p_score < 80:
                             weak_phonemes.add(p)
 
-                        # 🚀 核心逻辑：记录/更新这个音素的【最低分】
-                        # 如果已经在 map 里了，就和当前分数比大小，保留更低的那个
                         if p in phoneme_scores_map:
                             phoneme_scores_map[p] = min(phoneme_scores_map[p], int(p_score))
                         else:
-                            # 第一次遇到这个音素，直接记录
                             phoneme_scores_map[p] = int(p_score)
 
-                # 写入 DynamoDB 表
                 table = dynamodb.Table(table_name)
                 table.put_item(
                     Item={
                         'userId': user_id,
                         'timestamp': int(time.time()),
                         'score': int(pron_score),
-                        'referenceText': reference_text if reference_text else f"Topic: {topic_text}",
+                        'referenceText': effective_reference_text,
+                        'recognizedText': recognized_text,
                         'weakWords': weak_words,
                         'weakPhonemes': list(weak_phonemes), 
-                        # 🚀 新增字段：直接把字典存进去！DynamoDB 原生支持 Map 类型
                         'phonemeScores': phoneme_scores_map 
                     }
                 )
@@ -122,6 +125,12 @@ def lambda_handler(event, context):
                 "CompletenessScore": nbest.get('CompletenessScore', 0),
                 "PronScore": nbest.get('PronScore', 0)
             }
+            result_json['RecognizedText'] = (
+                result_json.get('DisplayText')
+                or nbest.get('Display')
+                or nbest.get('Lexical')
+                or ''
+            )
 
             # ==========================================
             # Rocket Core fix 3: Lossless backward compatibility! Extract nested scores to ensure no frontend blank screen errors
