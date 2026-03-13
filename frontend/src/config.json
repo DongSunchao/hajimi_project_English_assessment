@@ -1,0 +1,10 @@
+{
+  "apiBaseUrl": "https://4hi8leun21.execute-api.ap-southeast-2.amazonaws.com",
+  "scoreFreeApiPath": "score-free",
+  "referenceText": "Hello world, this is a test.",
+  "recording": {
+    "desiredSampRate": 16000,
+    "numberOfAudioChannels": 1,
+    "maxDurationMs": 15000
+  }
+}
