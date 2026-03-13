@@ -104,7 +104,7 @@ def lambda_handler(event, context):
             return build_response(500, {"error": "Voice cloning failed."})
 
     except HTTPError as e:
-        # 🚀 Important: read and surface the detailed ElevenLabs error message
+        # Important: read and surface the detailed ElevenLabs error message.
         detailed_error = e.read().decode('utf-8')
         print(f"ElevenLabs detailed error: {detailed_error}")
         return build_response(400, {"error": f"ElevenLabs Detail: {detailed_error}"})

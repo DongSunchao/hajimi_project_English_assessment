@@ -1,8 +1,8 @@
 import os
 import json
-import boto3# type: ignore
+import boto3  # type: ignore
 import urllib.request
-from boto3.dynamodb.conditions import Key# type: ignore
+from boto3.dynamodb.conditions import Key  # type: ignore
 
 dynamodb = boto3.resource('dynamodb')
 
@@ -32,7 +32,7 @@ def lambda_handler(event, context):
         user_id = body.get('userId')
         recognized_text = body.get('recognizedText', '')
 
-        # 🚀 deep is default mode
+        # Deep mode is the default.
         mode = body.get('mode', 'deep')
         
         if not user_id:
@@ -58,7 +58,7 @@ def lambda_handler(event, context):
             try:
                 db_res = table.query(
                     KeyConditionExpression=Key('userId').eq(user_id),
-                    ScanIndexForward=False, # Reverse order, most recent at [0]
+                    ScanIndexForward=False,  # Reverse order, most recent at [0]
                     Limit=5
                 )
                 history_items = db_res.get('Items', [])
@@ -83,7 +83,7 @@ def lambda_handler(event, context):
             historical_weak_phonemes = []
             for item in history_items[1:]:
                 historical_weak_phonemes.extend(item.get('weakPhonemes', []))
-            historical_weak_phonemes = list(set(historical_weak_phonemes)) # Deduplicate
+            historical_weak_phonemes = list(set(historical_weak_phonemes))  # Deduplicate
 
             prompt = f"""
             You are an extremely professional top-tier English pronunciation private tutor.
@@ -125,7 +125,7 @@ def lambda_handler(event, context):
 
         req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers={'Content-Type': 'application/json'})
 
-        max_retries = 2 
+        max_retries = 2
         ai_response_text = None
 
         for attempt in range(max_retries):
@@ -133,53 +133,53 @@ def lambda_handler(event, context):
                 response = urllib.request.urlopen(req, timeout=45)
                 result = json.loads(response.read().decode('utf-8'))
                 ai_response_text = result['candidates'][0]['content']['parts'][0]['text']
-                break  
+                break
 
             except urllib.error.HTTPError as e:
-                # 🛡️ for 503/429 error code 
+                # Retry for transient error codes.
                 if e.code in [503, 429, 500] and attempt < max_retries - 1:
-                    print(f"⚠️ something wrong in Google (error code {e.code})，1 second for {attempt + 1}th try...")
+                    print(f"Temporary Google API issue (HTTP {e.code}); retrying in 1 second (attempt {attempt + 1})...")
                     import time
-                    time.sleep(1) 
+                    time.sleep(1)
                     continue
                 else:
-                    print(f"❌ API totallty wrong or no usrage for AI: HTTP {e.code}")
+                    print(f"AI API call failed: HTTP {e.code}")
                     break
 
             except Exception as e:
-                print(f"❌ unexpected error: {e}")
+                print(f"Unexpected error: {e}")
                 break
 
         # ==========================================
-        # 🟢 normal return process
+        # Normal return path
         # ==========================================
         if ai_response_text:
             try:
                 return build_response(200, json.loads(ai_response_text))
             except Exception as parse_error:
-                print(f"❌ no legal json parse error:  {parse_error}")
+                print(f"Invalid JSON parse error: {parse_error}")
 
         # ==========================================
-        # 🛡️  2： (Fallback) for unprecess 
+        # Fallback response for unstable upstream responses.
         # ==========================================
         
-        print("⚠️  AI （Fallback） ")
+        print("AI fallback response activated")
         fallback_response = {}
-        current_mode = locals().get('mode', 'quick') 
+        current_mode = locals().get('mode', 'quick')
 
         if current_mode == 'quick':
             fallback_response = {
-                "quick_tip": "Wow, what a great try! The AI is taking a quick nap, but keep up the good work! 🌟"
+                "quick_tip": "Great try. The AI service is temporarily unavailable, but keep up the good work."
             }
         else:
             fallback_response = {
                 "quick_tip": "Great effort! Your rhythm is getting better.",
                 "detailed_diagnosis": "Our AI brain is processing massive data right now, but analyzing your acoustic features, you're doing a fantastic job.",
                 "tongue_twister": "Practice makes perfect when you pronounce with passion and purpose.",
-                "current_weak_phonemes": [] 
+                "current_weak_phonemes": []
             }
 
-        #fake 200 error
+        # Return fallback payload with HTTP 200.
         return build_response(200, fallback_response)
 
     except Exception as fatal_error:

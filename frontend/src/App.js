@@ -33,25 +33,25 @@ const AiAdviceCard = ({ aiAdvice }) => {
   return (
     <div className="ai-advice-card">
       <div className="ai-advice-header">
-        <div className="ai-advice-header-icon">🤖</div>
+        <div className="ai-advice-header-icon">AI</div>
         <div>
           <div className="ai-advice-header-title">AI Personal Tutor Suggestions</div>
-          <div className="ai-advice-header-subtitle">Powered by GPT · Personalized Voice Feedback</div>
+          <div className="ai-advice-header-subtitle">Powered by GPT - Personalized Voice Feedback</div>
         </div>
-        <div className="ai-advice-header-badge">✨ New</div>
+        <div className="ai-advice-header-badge">New</div>
       </div>
 
       <div className="ai-advice-body">
         {greeting && (
           <div className="ai-advice-greeting-row">
-            <div className="ai-advice-greeting-icon">👋</div>
+            <div className="ai-advice-greeting-icon">Hi</div>
             <p className="ai-advice-greeting-text">{greeting}</p>
           </div>
         )}
 
         {tongue_twister && (
           <div className="ai-advice-section ai-advice-section-bordered">
-            <span className="ai-advice-chip ai-advice-chip-purple">🌀 Exclusive Tongue Twister</span>
+            <span className="ai-advice-chip ai-advice-chip-purple">Exclusive Tongue Twister</span>
             <div className="ai-advice-tongue-card">
               <p className="ai-advice-tongue-text">" {tongue_twister} "</p>
             </div>
@@ -60,7 +60,7 @@ const AiAdviceCard = ({ aiAdvice }) => {
 
         {tip && (
           <div className="ai-advice-tip-card">
-            <span className="ai-advice-tip-icon">💡</span>
+            <span className="ai-advice-tip-icon">Tip</span>
             <div>
               <div className="ai-advice-tip-title">Secrets to Oral Pronunciation Power</div>
               <p className="ai-advice-tip-text">{tip}</p>
@@ -70,7 +70,7 @@ const AiAdviceCard = ({ aiAdvice }) => {
 
         {practice_sentences?.length > 0 && (
           <div className="ai-advice-section ai-advice-practice-section">
-            <span className="ai-advice-chip ai-advice-chip-blue">🗣️ Scene Practice Sentences</span>
+            <span className="ai-advice-chip ai-advice-chip-blue">Scene Practice Sentences</span>
             <div className="ai-advice-practice-list">
               {practice_sentences.map((sentence, idx) => (
                 <div key={idx} className="ai-advice-practice-item">
@@ -84,7 +84,7 @@ const AiAdviceCard = ({ aiAdvice }) => {
       </div>
 
       <div className="ai-advice-footer">
-        <span>🎯</span>
+        <span>Goal</span>
         <span>Try reading the tongue twister and practice sentences out loud, then record again to compare your progress!</span>
       </div>
     </div>
@@ -119,14 +119,14 @@ const ScoreResultCard = ({
   <>
     {wasmStats && (
       <div className="wasm-summary">
-        <span className="wasm-summary-icon">⚡</span>
+        <span className="wasm-summary-icon">Info</span>
         <div className="wasm-summary-text">
           <span className="wasm-summary-title">Wasm Edge Processing</span>
-          {' · '}
+          {' - '}
           Noise reduction & silence trimming
           <br />
           <span className="wasm-summary-from">{wasmStats.originalLen.toLocaleString()}</span>
-          {' → '}
+          {' to '}
           <span className="wasm-summary-to">{wasmStats.trimmedLen.toLocaleString()}</span>
           {' samples '}
           <span className="wasm-summary-saved">
@@ -137,9 +137,9 @@ const ScoreResultCard = ({
     )}
 
     <div className="score-card">
-      <h3>🎉 Microsoft Azure Scoring Results</h3>
-      {recognizedText && <p>🎙️ AI understood what you said: <em>{recognizedText}</em></p>}
-      {quickTip && <div className="quick-tip-bubble">💬 {quickTip}</div>}
+      <h3>Microsoft Azure Scoring Results</h3>
+      {recognizedText && <p>AI understood what you said: <em>{recognizedText}</em></p>}
+      {quickTip && <div className="quick-tip-bubble">{quickTip}</div>}
       <p>Pronunciation Accuracy (Accuracy): <strong>{scoreResult.accuracy}</strong></p>
       <p>Fluency (Fluency): <strong>{scoreResult.fluency}</strong></p>
       <p>Completeness (Completeness): <strong>{scoreResult.completeness}</strong></p>
@@ -150,7 +150,7 @@ const ScoreResultCard = ({
         disabled={aiLoading}
         className={`ai-tutor-button ${aiLoading ? 'is-loading' : ''}`}
       >
-        {aiLoading ? '⏳ Deep analysis generation in progress...' : '🤖 Generate Deep Analysis Report'}
+        {aiLoading ? 'Deep analysis generation in progress...' : 'Generate Deep Analysis Report'}
       </button>
     </div>
   </>
@@ -333,7 +333,7 @@ const App = () => {
       const presignRes = await fetch(joinApiUrl(apiBaseUrl, 'get-upload-url'));
       if (!presignRes.ok) {
         const errorText = await presignRes.text();
-        console.error("🚨 :", errorText);
+        console.error('Presign API error:', errorText);
         throw new Error(`: ${errorText}`);
       }
       const { upload_url, file_name } = unwrapBody(await presignRes.json());
@@ -455,7 +455,7 @@ const App = () => {
         setStatusText('AI tutor call failed, please check the console.');
       })
       .finally(() => {
-        setAiLoading(false); // 文本加载完毕
+        setAiLoading(false); // Text analysis is complete.
       });
 
     // ==========================================
@@ -465,7 +465,7 @@ const App = () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        fileName: currentS3FileName, // 必须传刚才存下来的 S3 文件名
+        fileName: currentS3FileName, // Must pass the most recently saved S3 file name.
         text: recognizedText         // feed the user's original sentence directly to ElevenLabs!
       }),
     })
@@ -502,7 +502,7 @@ const App = () => {
 
       {/* Mode selection */}
       <div className="mode-switch">
-        {[['with-text', '📝 Score given text'], ['free', '🎯 Free reading score']].map(([mode, label]) => (
+        {[['with-text', 'Score given text'], ['free', 'Free reading score']].map(([mode, label]) => (
           <button
             key={mode}
             onClick={() => setAssessmentMode(mode)}
@@ -553,7 +553,7 @@ const App = () => {
           onClick={isRecording ? stopRecording : startRecording}
           className={`record-button ${isRecording ? 'is-recording' : ''}`}
         >
-          {isRecording ? '⏹ Stop recording' : '🎙️ Press to start reading'}
+          {isRecording ? 'Stop recording' : 'Press to start reading'}
         </button>
       </div>
 
