@@ -13,38 +13,43 @@ QR:
 
 ## Technical Highlights
 
-- **Low-Latency Serverless Architecture**
-  Deployed on AWS in the Sydney region using API Gateway and Lambda for responsive, event-driven processing.
+- **Multi-Cloud "Best-of-Breed" Strategy**
+  Strategically orchestrated the strongest capabilities across three major cloud providers: AWS for robust, zero-maintenance serverless computing; Azure Cognitive Services for industry-leading, phoneme-level pronunciation assessment; and Google Gemini for dynamic, context-aware LLM interactions.
 
-- **Precision Phonetic Analysis**
-  Powered by Azure Speech Service, with word-level and phoneme-level pronunciation scoring.
+- **Global Edge Acceleration & Enterprise-Grade Security**
+  Deployed the React frontend via Amazon CloudFront (CDN) coupled with S3 static hosting to ensure sub-second load times globally over HTTPS. Implemented strict CORS policies and API Gateway rate limiting to protect backend endpoints from abuse and cost overruns.
 
-- **Granular Data Modeling**
-  Uses a custom DynamoDB schema to track the lowest score of each phoneme across sessions, helping identify recurring pronunciation issues.
+- **Zero-Compute Direct Audio Uploads**
+  Utilized S3 Presigned URLs to allow the frontend to bypass API Gateway payload limits and upload audio streams directly to storage, drastically reducing Lambda compute costs and network latency.
 
-- **AI Voice Cloning**
-  Integrates ElevenLabs for fast voice synthesis, enabling the tutor to respond using the user's cloned voice.
+- **Granular Data Modeling & Continuous Tracking**
+  Designed a custom DynamoDB NoSQL schema with sub-millisecond latency to track user-specific weak phonemes across sessions, building a personalized learning curve and identifying recurring pronunciation flaws.
 
-- **Hybrid Cloud Strategy**
-  Coordinates AWS for compute and storage, Azure for speech analysis, and Google Gemini for LLM-driven interaction.
+- **Hyper-Personalized AI Voice Cloning**
+  Integrated ElevenLabs API for ultra-fast, high-fidelity voice synthesis, enabling the AI tutor to provide feedback and pronounce tongue twisters using a custom-cloned voice.
 
 ## Tech Stack
 
-- **Frontend:** React.js, RecordRTC
-- **Backend:** Python, AWS Lambda, AWS API Gateway
-- **Storage:** Amazon S3, Amazon DynamoDB
-- **AI Services:** Azure Speech-to-Text, ElevenLabs API, Google Gemini API
+**Frontend (Client & Edge)**
+- React.js — UI Framework
+- RecordRTC — Browser Audio Capture
+- Amazon CloudFront — Global Edge CDN & HTTPS
+- Amazon S3 — Static Website Hosting
 
-## Data Schema: The "Phoneme Master" Design
+**Backend (Serverless Core)**
+- Python 3.x — Core Logic
+- AWS Lambda — Microservices: `score`, `ai-tutor`, `gen-voice`, `get-history`, `get-s3-url`
+- Amazon API Gateway — RESTful Routing, CORS & Throttling
 
-Pronunciation data is stored in a sparse map format to reduce DynamoDB write costs while preserving detailed session-level phoneme weakness data.
+**Data & Storage**
+- Amazon DynamoDB — NoSQL User Analytics & Phoneme Tracking
+- Amazon S3 — Audio Stream Storage
+- Amazon CloudWatch — Centralized Logging & Observability
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `userId` | String (Partition Key) | Unique user identifier |
-| `timestamp` | Number (Sort Key) | Unix epoch timestamp |
-| `score` | Number | Overall pronunciation accuracy score from 0 to 100 |
-| `phonemeScores` | Map | Example: `{ "th": 65, "r": 82 }`, storing the weakest phoneme scores in the session |
+**External AI & Cognitive Engines**
+- Microsoft Azure Speech Service — Pronunciation Assessment & Phoneme Scoring
+- Google Gemini Pro API — LLM-driven dynamic content & Tongue Twister generation
+- ElevenLabs API — Voice Cloning & Neural TTS
 
 
 ## how to compile the cpp optimizer:
