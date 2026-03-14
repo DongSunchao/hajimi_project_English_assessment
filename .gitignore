@@ -77,3 +77,8 @@ Thumbs.db
 
 # Workspace-specific stray lockfile from running npm in repo root
 /package-lock.json
+
+
+# cpp compilation outputs
+/backend/cppOpitimizer/*.wasm
+/backend/cppOpitimizer/*.js

@@ -47,5 +47,21 @@ Pronunciation data is stored in a sparse map format to reduce DynamoDB write cos
 | `phonemeScores` | Map | Example: `{ "th": 65, "r": 82 }`, storing the weakest phoneme scores in the session |
 
 
+## how to compile the cpp optimizer:
+
+# PowerShell (backtick line break) or write directly on one line:
+```powershell
+emcc audio_engine.cpp -o audio_engine.js `
+  -O3 `
+  -s WASM=1 `
+  -s MODULARIZE=1 `
+  -s EXPORT_NAME="createWasmModule" `
+  -s EXPORTED_RUNTIME_METHODS="['cwrap','wasmMemory']" `
+  -s EXPORTED_FUNCTIONS="['_process_audio_edge','_malloc','_free']" `
+  -s ALLOW_MEMORY_GROWTH=1
+
+Copy-Item audio_engine.js, audio_engine.wasm ..\..\frontend\public\wasm\
+```
+
 ## our architecture of the app
 ![Architecture](frontend/public/architecture%20of%20the%20app.png)
