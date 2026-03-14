@@ -1,4 +1,5 @@
 import React from 'react';
+import { tongueTwisters } from '../utils/tongueTwisters';
 
 const AssessmentForm = ({
   assessmentMode,
@@ -11,10 +12,20 @@ const AssessmentForm = ({
   return (
     <>
       <div className="mode-switch">
-        {[['with-text', 'Score given text'], ['free', 'Free reading score']].map(([mode, label]) => (
+        {[
+          ['with-text', 'Score given text'],
+          ['tongue-twister', 'Tongue Twister'],
+          ['free', 'Free reading score']
+        ].map(([mode, label]) => (
           <button
             key={mode}
-            onClick={() => setAssessmentMode(mode)}
+            onClick={() => {
+              setAssessmentMode(mode);
+              // Set initial tongue twister if switching to this mode
+              if (mode === 'tongue-twister' && !tongueTwisters.includes(inputText)) {
+                setInputText(tongueTwisters[0]);
+              }
+            }}
             className={`mode-button ${assessmentMode === mode ? 'is-active' : ''}`}
           >
             {label}
@@ -52,6 +63,28 @@ const AssessmentForm = ({
             className="form-input form-textarea"
             placeholder="Please enter English sentence..."
           />
+        </div>
+      )}
+
+      {assessmentMode === 'tongue-twister' && (
+        <div className="form-section">
+          <label className="form-label">
+            Choose a Tongue Twister:
+          </label>
+          <select
+            value={inputText}
+            onChange={e => setInputText(e.target.value)}
+            className="form-input"
+          >
+            {tongueTwisters.map((twister, index) => (
+              <option key={index} value={twister}>
+                {twister}
+              </option>
+            ))}
+          </select>
+          <div className="tongue-twister-display">
+            <p className="twister-text">"{inputText}"</p>
+          </div>
         </div>
       )}
     </>

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import RecordRTC from 'recordrtc';
+import { Link } from 'react-router-dom';
 import config from '../config.json';
 import '../App.css';
 import { runWasmAudioProcessing, encodeWAV } from '../utils/wasmAudio';
@@ -9,6 +10,7 @@ import AiAdviceCard from '../components/AiAdviceCard';
 import RecordingPanel from '../components/RecordingPanel';
 import ScoreResultCard from '../components/ScoreResultCard';
 import AssessmentForm from '../components/AssessmentForm';
+import TutorialDialog from '../components/TutorialDialog';
 
 const AssessmentPage = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -28,6 +30,15 @@ const AssessmentPage = () => {
   const [currentS3FileName, setCurrentS3FileName] = useState(null);
   const [clonedAudio, setClonedAudio] = useState(null);
   const [, setIsVoiceLoading] = useState(false);
+  const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+
+  useEffect(() => {
+    const hasSeenTutorial = localStorage.getItem('has_seen_tutorial');
+    if (!hasSeenTutorial) {
+      setIsTutorialOpen(true);
+      localStorage.setItem('has_seen_tutorial', 'true');
+    }
+  }, []);
 
   const recorderRef = useRef(null);
   const timerRef = useRef(null);
@@ -205,13 +216,32 @@ const AssessmentPage = () => {
 
       setStatusText('Upload successful! Calling Azure scoring...');
       const currentUserId = getOrCreateUserId();
-      const isWithText = currentMode === 'with-text';
+      const isWithText = currentMode === 'with-text' || currentMode === 'tongue-twister';
       const scoreEndpoint = isWithText
         ? joinApiUrl(apiBaseUrl, 'score')
         : joinApiUrl(apiBaseUrl, config.scoreFreeApiPath);
+      
+      let finalTopic = 'General Practice';
+      if (currentMode === 'free') {
+        finalTopic = currentTopic ? `Free Talk: ${currentTopic}` : 'Free Talk';
+      } else if (currentMode === 'tongue-twister') {
+        finalTopic = 'Tongue Twister';
+      } else if (currentMode === 'with-text') {
+        finalTopic = 'Reading Practice';
+      }
+
       const scorePayload = isWithText
-        ? { fileName: file_name, referenceText: inputTextRef.current, userId: currentUserId }
-        : { fileName: file_name, userId: currentUserId, topicText: currentTopic };
+        ? { 
+            fileName: file_name, 
+            referenceText: inputTextRef.current, 
+            userId: currentUserId,
+            topic: finalTopic
+          }
+        : { 
+            fileName: file_name, 
+            userId: currentUserId, 
+            topic: finalTopic
+          };
 
       const scoreRes = await fetch(scoreEndpoint, {
         method: 'POST',
@@ -351,20 +381,44 @@ const AssessmentPage = () => {
   };
 
   return (
-    <div className="app-shell">
-      <h2>English Pronunciation Assessment Demo</h2>
+    <div className="app-shell" id="step-0">
+      <header className="app-header">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <Link to="/" className="back-link" style={{ fontSize: '14px' }}>← Back</Link>
+          <h2>English Pronunciation Assessment Demo</h2>
+        </div>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <Link 
+            to="/history" 
+            className="help-button" 
+            title="View History"
+            style={{ textDecoration: 'none', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            📋
+          </Link>
+          <button 
+            className="help-button" 
+            onClick={() => setIsTutorialOpen(true)}
+            title="Replay Tutorial"
+          >
+            ?
+          </button>
+        </div>
+      </header>
 
       {/* Mode selection and Assessment form */}
-      <AssessmentForm
-        assessmentMode={assessmentMode}
-        setAssessmentMode={setAssessmentMode}
-        topicText={topicText}
-        setTopicText={setTopicText}
-        inputText={inputText}
-        setInputText={setInputText}
-      />
+      <div id="step-1">
+        <AssessmentForm
+          assessmentMode={assessmentMode}
+          setAssessmentMode={setAssessmentMode}
+          topicText={topicText}
+          setTopicText={setTopicText}
+          inputText={inputText}
+          setInputText={setInputText}
+        />
+      </div>
 
-      <div className="record-action">
+      <div className="record-action" id="step-2">
         <button
           onClick={isRecording ? stopRecording : startRecording}
           className={`record-button ${isRecording ? 'is-recording' : ''}`}
@@ -386,18 +440,25 @@ const AssessmentPage = () => {
       )}
 
       {scoreResult && (
-        <ScoreResultCard
-          wasmStats={wasmStats}
-          quickTip={quickTip}
-          recognizedText={recognizedText}
-          scoreResult={scoreResult}
-          aiLoading={aiLoading}
-          onCallAiTutor={callAiTutor}
-        />
+        <div id="step-3">
+          <ScoreResultCard
+            wasmStats={wasmStats}
+            quickTip={quickTip}
+            recognizedText={recognizedText}
+            scoreResult={scoreResult}
+            aiLoading={aiLoading}
+            onCallAiTutor={callAiTutor}
+          />
+        </div>
       )}
 
       {aiAdvice && <AiAdviceCard aiAdvice={aiAdvice} />}
       {clonedAudio && (<audio controls src={clonedAudio} autoPlay /> )}
+      
+      <TutorialDialog 
+        isOpen={isTutorialOpen} 
+        onClose={() => setIsTutorialOpen(false)} 
+      />
     </div>
   );
 };
