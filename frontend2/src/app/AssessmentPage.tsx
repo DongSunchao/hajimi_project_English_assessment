@@ -25,6 +25,18 @@ import { DevModeIndicator } from './components/DevModeIndicator';
 
 type AssessmentMode = 'custom' | 'tongue-twister' | 'free';
 
+const getErrorMessage = (error: unknown): string => {
+  return error instanceof Error ? error.message : 'Unknown error';
+};
+
+const normalizeAudioDataUri = (audio: string): string => {
+  const trimmed = audio.trim();
+  if (trimmed.startsWith('data:audio/')) {
+    return trimmed;
+  }
+  return `data:audio/mp3;base64,${trimmed}`;
+};
+
 export default function AssessmentPage() {
   const navigate = useNavigate();
   
@@ -105,25 +117,27 @@ export default function AssessmentPage() {
           stopRecording();
         }
       }, config.recording.maxDurationMs);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error starting recording:', error);
+      const errorMessage = getErrorMessage(error);
+      const errorName = error instanceof Error ? error.name : '';
       
       // Provide specific error messages
-      if (error.name === 'NotAllowedError') {
+      if (errorName === 'NotAllowedError') {
         setPermissionError(
           'Microphone access denied. Please click the 🔒 icon in your browser address bar and allow microphone access, then try again.'
         );
-      } else if (error.name === 'NotFoundError') {
+      } else if (errorName === 'NotFoundError') {
         setPermissionError(
           'No microphone found. Please connect a microphone and try again.'
         );
-      } else if (error.name === 'NotReadableError') {
+      } else if (errorName === 'NotReadableError') {
         setPermissionError(
           'Microphone is already in use by another application. Please close other apps using the microphone and try again.'
         );
       } else {
         setPermissionError(
-          `Failed to access microphone: ${error.message || 'Unknown error'}. Please check your browser settings.`
+          `Failed to access microphone: ${errorMessage}. Please check your browser settings.`
         );
       }
     }
@@ -146,15 +160,15 @@ export default function AssessmentPage() {
     });
   };
 
-  const getOrCreateUserId = () => {
-    const key = 'hajimi_user_id';
-    const existing = localStorage.getItem(key);
-    if (existing) return existing;
+  const getOrCreateUserId = (): string => {
+  const key = 'app_user_id'; 
+  const existing = localStorage.getItem(key);
+  if (existing) return existing;
 
-    const generated = `user-${crypto.randomUUID()}`;
-    localStorage.setItem(key, generated);
-    return generated;
-  };
+  const generated = crypto.randomUUID(); 
+  localStorage.setItem(key, generated);
+  return generated;
+};
 
   // Process audio with WASM (client-side resampling)
   const processAudioWithWasm = async (blob: Blob) => {
@@ -308,16 +322,9 @@ export default function AssessmentPage() {
         .catch((err) => {
           console.warn('Quick AI tip retrieval failed:', err);
         });
-    } catch (error) {
-      console.info('[Assessment API] Backend unavailable, using mock scores');
-      // Mock response for development
-      setScoreResult({
-        overallScore: 75,
-        pronunciation: 78,
-        accuracy: 72,
-        fluency: 76,
-        completeness: 74,
-      });
+    } catch (error: unknown) {
+      console.error('[Assessment API] ！', error);
+      alert(`have you turned it off and on again？\ninfo: ${getErrorMessage(error)}`);
     } finally {
       setIsLoadingScore(false);
     }
@@ -386,7 +393,7 @@ export default function AssessmentPage() {
       .then((data) => {
         const audioData = data.audio_base64 || data.audioBase64;
         if (audioData) {
-          setClonedAudio(audioData);
+          setClonedAudio(normalizeAudioDataUri(audioData));
         }
       })
       .catch((err) => {
@@ -555,7 +562,7 @@ export default function AssessmentPage() {
         {clonedAudio && (
           <div className="retro-paper border-4 border-[#3a3a3a] rounded-lg p-6 retro-shadow">
             <label className="block text-sm font-bold text-[#2a2a2a] mb-3">CLONED VOICE:</label>
-            <audio controls src={`data:audio/mp3;base64,${clonedAudio}`} className="w-full" />
+            <audio controls autoPlay src={clonedAudio} className="w-full" />
           </div>
         )}
       </div>

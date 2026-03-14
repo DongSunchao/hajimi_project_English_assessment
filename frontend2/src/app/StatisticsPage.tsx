@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { clsx } from 'clsx';
 import { Bell, LogOut } from 'lucide-react';
 import svgPaths from "../imports/svg-ubr093inv5";
 import { ImageWithFallback } from './components/figma/ImageWithFallback';
+import { fetchHistory, type HistoryEntry } from './utils/historyApi';
 
 /**
  * Phoneme data structure for UK pronunciation
@@ -14,26 +15,26 @@ import { ImageWithFallback } from './components/figma/ImageWithFallback';
  */
 const PHONEMES_UK = [
   { p: '/iː/', w: 'see', s: 'none', ex: 'see' },
-  { p: '/ɪ/', w: 'sit', s: 'excellent', ex: 'sit' },
-  { p: '/e/', w: 'bed', s: 'good', ex: 'bed' },
-  { p: '/æ/', w: 'cat', s: 'poor', ex: 'cat' },
+  { p: '/ɪ/', w: 'sit', s: 'none', ex: 'sit' },
+  { p: '/e/', w: 'bed', s: 'none', ex: 'bed' },
+  { p: '/æ/', w: 'cat', s: 'none', ex: 'cat' },
   { p: '/ɑː/', w: 'father', s: 'none', ex: 'father' },
   { p: '/ɒ/', w: 'dog', s: 'none', ex: 'dog' },
   { p: '/ɔː/', w: 'saw', s: 'none', ex: 'saw' },
   { p: '/ʊ/', w: 'put', s: 'none', ex: 'put' },
-  { p: '/uː/', w: 'too', s: 'excellent', ex: 'too' },
+  { p: '/uː/', w: 'too', s: 'none', ex: 'too' },
   { p: '/ʌ/', w: 'cut', s: 'none', ex: 'cut' },
   { p: '/ɜː/', w: 'bird', s: 'none', ex: 'bird' },
   { p: '/ə/', w: 'about', s: 'none', ex: 'about' },
-  { p: '/eɪ/', w: 'say', s: 'good', ex: 'say' },
+  { p: '/eɪ/', w: 'say', s: 'none', ex: 'say' },
   { p: '/aɪ/', w: 'my', s: 'none', ex: 'my' },
-  { p: '/ɔɪ/', w: 'boy', s: 'poor', ex: 'boy' },
+  { p: '/ɔɪ/', w: 'boy', s: 'none', ex: 'boy' },
   { p: '/aʊ/', w: 'how', s: 'none', ex: 'how' },
   { p: '/əʊ/', w: 'no', s: 'none', ex: 'no' },
   { p: '/ɪə/', w: 'near', s: 'none', ex: 'near' },
   { p: '/eə/', w: 'hair', s: 'none', ex: 'hair' },
   { p: '/ʊə/', w: 'tour', s: 'none', ex: 'tour' },
-  { p: '/p/', w: 'pen', s: 'good', ex: 'pen' },
+  { p: '/p/', w: 'pen', s: 'none', ex: 'pen' },
   { p: '/b/', w: 'boy', s: 'none', ex: 'boy' },
   { p: '/t/', w: 'tea', s: 'none', ex: 'tea' },
   { p: '/d/', w: 'day', s: 'none', ex: 'day' },
@@ -41,8 +42,8 @@ const PHONEMES_UK = [
   { p: '/g/', w: 'go', s: 'none', ex: 'go' },
   { p: '/f/', w: 'five', s: 'none', ex: 'five' },
   { p: '/v/', w: 'van', s: 'none', ex: 'van' },
-  { p: '/θ/', w: 'thin', s: 'poor', ex: 'thin' },
-  { p: '/ð/', w: 'this', s: 'poor', ex: 'this' },
+  { p: '/θ/', w: 'thin', s: 'none', ex: 'thin' },
+  { p: '/ð/', w: 'this', s: 'none', ex: 'this' },
   { p: '/s/', w: 'see', s: 'none', ex: 'see' },
   { p: '/z/', w: 'zoo', s: 'none', ex: 'zoo' },
   { p: '/ʃ/', w: 'she', s: 'none', ex: 'she' },
@@ -58,10 +59,38 @@ const PHONEMES_UK = [
  * s: Practice status (none/excellent/good/poor)
  * ex: Example word for display
  */
-const PHONEMES_US = PHONEMES_UK.map((p, i) => ({ 
-  ...p, 
-  s: i % 5 === 0 ? 'excellent' : i % 3 === 0 ? 'good' : i % 7 === 0 ? 'poor' : 'none' 
+const PHONEMES_US = PHONEMES_UK.map((p) => ({
+  ...p,
+  s: 'none',
 }));
+
+type PhonemeState = 'none' | 'excellent' | 'good' | 'poor';
+
+const scoreToState = (score: number): PhonemeState => {
+  if (score >= 85) return 'excellent';
+  if (score >= 70) return 'good';
+  return 'poor';
+};
+
+const normalizePhoneme = (value: string): string => {
+  return value
+    .toLowerCase()
+    .replace(/\//g, '')
+    .replace(/ː/g, '')
+    .replace(/\s+/g, '');
+};
+
+const PHONEME_ALIASES: Record<string, string[]> = {
+  '/θ/': ['th'],
+  '/ð/': ['dh'],
+  '/ʃ/': ['sh'],
+  '/ʒ/': ['zh'],
+  '/tʃ/': ['ch'],
+  '/dʒ/': ['jh'],
+  '/ŋ/': ['ng'],
+  '/ɜː/': ['er'],
+  '/ə/': ['ax'],
+};
 
 /**
  * PhonemeKey Component
@@ -131,8 +160,78 @@ export default function StatisticsPage() {
   const [selectedPhoneme, setSelectedPhoneme] = useState<string | null>('/θ/');
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [generatedSentence, setGeneratedSentence] = useState('');
+  const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
 
-  const phonemes = region === 'UK' ? PHONEMES_UK : PHONEMES_US;
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        const history = await fetchHistory();
+        setHistoryEntries(history);
+      } catch {
+        setHistoryEntries([]);
+      }
+    };
+
+    loadHistory();
+  }, []);
+
+  const phonemeStates = useMemo(() => {
+    const scoreMap = new Map<string, number>();
+    const weakSet = new Set<string>();
+
+    historyEntries.forEach((entry) => {
+      Object.entries(entry.phonemeScores || {}).forEach(([phoneme, score]) => {
+        const normalized = normalizePhoneme(phoneme);
+        if (!normalized) return;
+
+        const numericScore = Number(score);
+        if (!Number.isFinite(numericScore)) return;
+
+        const prev = scoreMap.get(normalized);
+        scoreMap.set(normalized, prev === undefined ? numericScore : Math.min(prev, numericScore));
+      });
+
+      (entry.weakPhonemes || []).forEach((phoneme) => {
+        weakSet.add(normalizePhoneme(phoneme));
+      });
+    });
+
+    const resolveState = (symbol: string): PhonemeState => {
+      const candidates = [
+        normalizePhoneme(symbol),
+        ...(PHONEME_ALIASES[symbol] || []).map((alias) => normalizePhoneme(alias)),
+      ];
+
+      let minScore: number | undefined;
+      let hasWeak = false;
+
+      candidates.forEach((candidate) => {
+        const score = scoreMap.get(candidate);
+        if (score !== undefined) {
+          minScore = minScore === undefined ? score : Math.min(minScore, score);
+        }
+        if (weakSet.has(candidate)) {
+          hasWeak = true;
+        }
+      });
+
+      if (minScore !== undefined) return scoreToState(minScore);
+      if (hasWeak) return 'poor';
+      return 'none';
+    };
+
+    const map = new Map<string, PhonemeState>();
+    PHONEMES_UK.forEach((phoneme) => {
+      map.set(phoneme.p, resolveState(phoneme.p));
+    });
+    return map;
+  }, [historyEntries]);
+
+  const basePhonemes = region === 'UK' ? PHONEMES_UK : PHONEMES_US;
+  const phonemes = basePhonemes.map((phoneme) => ({
+    ...phoneme,
+    s: phonemeStates.get(phoneme.p) || 'none',
+  }));
   const selectedData = phonemes.find(p => p.p === selectedPhoneme);
 
   const itCrowdQuotes = [

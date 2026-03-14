@@ -11,11 +11,14 @@ export interface HistoryEntry {
   id: string;
   timestamp: string;
   referenceText: string;
+  topic: string;
   overallScore: number;
   pronunciation: number;
   accuracy: number;
   fluency: number;
   completeness: number;
+  weakPhonemes: string[];
+  phonemeScores: Record<string, number>;
 }
 
 const getOrCreateUserId = (): string => {
@@ -42,7 +45,6 @@ const isDevelopmentMode = () => {
  * @returns Promise<HistoryEntry[]>
  */
 export async function fetchHistory(): Promise<HistoryEntry[]> {
-  // Use mock data in development mode
   if (isDevelopmentMode()) {
     console.info('[History API] Development mode: Using mock data');
     return Promise.resolve(getMockHistory());
@@ -51,16 +53,17 @@ export async function fetchHistory(): Promise<HistoryEntry[]> {
   try {
     const url = joinApiUrl(config.api.baseUrl, config.api.endpoints.history);
     const userId = getOrCreateUserId();
+
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId }),
     });
-    
+
     if (!response.ok) {
       throw new Error(`Failed to fetch history: ${response.statusText}`);
     }
-    
+
     const data = unwrapBody(await response.json());
     const dbItems = data.history || [];
 
@@ -80,18 +83,20 @@ export async function fetchHistory(): Promise<HistoryEntry[]> {
         id: String(rawTs ?? crypto.randomUUID()),
         timestamp,
         referenceText: item.referenceText || item.recognizedText || 'No text recorded',
+        topic: item.topic || 'General',
         overallScore,
         pronunciation: accuracy,
         accuracy,
         fluency,
         completeness,
+        weakPhonemes: [] as string[],
+        phonemeScores: {} as Record<string, number>,
       };
     });
 
     return mappedHistory;
   } catch (error) {
     console.info('[History API] Backend unavailable, using mock data');
-    // Silently fallback to mock data
     return getMockHistory();
   }
 }
@@ -147,31 +152,40 @@ export const getMockHistory = (): HistoryEntry[] => {
       id: '1',
       timestamp: new Date(Date.now() - 86400000).toISOString(),
       referenceText: 'The quick brown fox jumps over the lazy dog.',
+      topic: 'General',
       overallScore: 85,
       pronunciation: 88,
       accuracy: 82,
       fluency: 86,
       completeness: 84,
+      weakPhonemes: [],
+      phonemeScores: {},
     },
     {
       id: '2',
       timestamp: new Date(Date.now() - 172800000).toISOString(),
       referenceText: 'She sells seashells by the seashore.',
+      topic: 'General',
       overallScore: 72,
       pronunciation: 70,
       accuracy: 75,
       fluency: 72,
       completeness: 71,
+      weakPhonemes: [],
+      phonemeScores: {},
     },
     {
       id: '3',
       timestamp: new Date(Date.now() - 259200000).toISOString(),
       referenceText: 'Peter Piper picked a peck of pickled peppers.',
+      topic: 'General',
       overallScore: 68,
       pronunciation: 65,
       accuracy: 70,
       fluency: 69,
       completeness: 68,
+      weakPhonemes: [],
+      phonemeScores: {},
     },
   ];
 };
