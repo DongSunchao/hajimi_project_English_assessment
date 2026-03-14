@@ -2,7 +2,7 @@ import json
 import boto3# type: ignore
 import uuid
 import os
-from botocore.config import Config
+from botocore.config import Config# type: ignore
 
 # Initialize S3 client
 s3_client = boto3.client(
