@@ -67,9 +67,10 @@ const HistoryPage = () => {
                     "{item.text}"
                   </p>
                   
-                  <div className="history-stats">
-                    <span>Fluency: {item.fluency}%</span>
-                    <span>Pronunciation: {item.pronunciation}%</span>
+                  <div className="history-stats" style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', color: '#666', fontSize: '0.9rem', marginTop: '10px' }}>
+                    <span>🗣️ Fluency: <strong style={{color: '#333'}}>{item.fluency}</strong></span>
+                    <span>🎯 Pronunciation: <strong style={{color: '#333'}}>{item.pronunciation}</strong></span>
+                    <span>✅ Completeness: <strong style={{color: '#333'}}>{item.completeness}</strong></span>
                   </div>
                 </div>
               </div>

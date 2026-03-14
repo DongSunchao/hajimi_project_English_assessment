@@ -14,8 +14,8 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "dev": "vite",
-    "start": "vite",
+    "dev": "vite --host localhost --port 5173",
+    "start": "vite --host localhost --port 5173",
     "build": "vite build",
     "preview": "vite preview",
     "test": "react-scripts test",

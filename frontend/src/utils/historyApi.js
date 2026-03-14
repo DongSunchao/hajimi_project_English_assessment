@@ -33,8 +33,9 @@ export const fetchHistoryByUuid = async (userId) => {
         text: item.referenceText || item.recognizedText || 'No text recorded',
         topic : item.topic || 'General',
         score: item.score || 0,
-        fluency: item.score || 0,                
-        pronunciation: item.score || 0,
+        fluency: item.fluencyScore !== undefined ? item.fluencyScore : (item.score || 0),                
+        pronunciation: item.accuracyScore !== undefined ? item.accuracyScore : (item.score || 0),
+        completeness: item.completenessScore !== undefined ? item.completenessScore : 100,
         
         weakPhonemes: item.weakPhonemes || []    
       };
