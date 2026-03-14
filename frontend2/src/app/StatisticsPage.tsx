@@ -71,6 +71,37 @@ const MAX_YELLOW_PHONEMES = 8;
 const RECENT_WINDOW = 5;
 const RECENT_MIN_SAMPLES_FOR_RECOVERY = 3;
 const RECENT_RECOVERY_SCORE = 80;
+const MIN_VALID_SCORE = 1;
+
+const getRepresentativeScore = (historyScores: number[], recentScores: number[]): number | undefined => {
+  if (historyScores.length === 0 && recentScores.length === 0) {
+    return undefined;
+  }
+
+  let robustHistoryWorst: number | undefined;
+  if (historyScores.length > 0) {
+    const sortedHistory = [...historyScores].sort((a, b) => a - b);
+    const outlierDrop = sortedHistory.length >= 8 ? 2 : sortedHistory.length >= 5 ? 1 : 0;
+    robustHistoryWorst = sortedHistory[Math.min(outlierDrop, sortedHistory.length - 1)];
+  }
+
+  let recentWorstAverage: number | undefined;
+  if (recentScores.length > 0) {
+    const sortedRecent = [...recentScores].sort((a, b) => a - b);
+    const worstSamples = sortedRecent.slice(0, Math.min(2, sortedRecent.length));
+    recentWorstAverage = worstSamples.reduce((sum, score) => sum + score, 0) / worstSamples.length;
+  }
+
+  if (recentWorstAverage === undefined) return robustHistoryWorst;
+  if (robustHistoryWorst === undefined) return recentWorstAverage;
+
+  if (recentScores.length >= RECENT_MIN_SAMPLES_FOR_RECOVERY) {
+    // Recent repeated data should dominate to avoid permanent historical poisoning.
+    return recentWorstAverage;
+  }
+
+  return Math.min(robustHistoryWorst, recentWorstAverage);
+};
 
 const scoreToState = (score: number): PhonemeState => {
   if (score >= 90) return 'excellent';
@@ -227,7 +258,7 @@ export default function StatisticsPage() {
     );
     const recentHistory = sortedHistory.slice(0, RECENT_WINDOW);
 
-    const scoreMap = new Map<string, number>();
+    const scoreSamplesMap = new Map<string, number[]>();
     const weakCountMap = new Map<string, number>();
     const recentScoreSamplesMap = new Map<string, number[]>();
     const recentWeakCountMap = new Map<string, number>();
@@ -240,8 +271,11 @@ export default function StatisticsPage() {
         const numericScore = Number(score);
         if (!Number.isFinite(numericScore)) return;
 
-        const prev = scoreMap.get(normalized);
-        scoreMap.set(normalized, prev === undefined ? numericScore : Math.min(prev, numericScore));
+        if (numericScore < MIN_VALID_SCORE) return;
+
+        const samples = scoreSamplesMap.get(normalized) || [];
+        samples.push(numericScore);
+        scoreSamplesMap.set(normalized, samples);
       });
 
       (entry.weakPhonemes || []).forEach((phoneme) => {
@@ -258,6 +292,8 @@ export default function StatisticsPage() {
 
         const numericScore = Number(score);
         if (!Number.isFinite(numericScore)) return;
+
+        if (numericScore < MIN_VALID_SCORE) return;
 
         const list = recentScoreSamplesMap.get(normalized) || [];
         list.push(numericScore);
@@ -277,21 +313,21 @@ export default function StatisticsPage() {
         ...(PHONEME_ALIASES[phoneme.p] || []).map((alias) => normalizePhoneme(alias)),
       ];
 
-      let minScore: number | undefined;
+      const historyScores: number[] = [];
       let weakCount = 0;
       let recentWeakCount = 0;
       const recentScores: number[] = [];
 
       candidates.forEach((candidate) => {
-        const score = scoreMap.get(candidate);
-        if (score !== undefined) {
-          minScore = minScore === undefined ? score : Math.min(minScore, score);
-        }
+        const samples = scoreSamplesMap.get(candidate) || [];
+        historyScores.push(...samples);
         weakCount += weakCountMap.get(candidate) || 0;
         recentWeakCount += recentWeakCountMap.get(candidate) || 0;
-        const samples = recentScoreSamplesMap.get(candidate) || [];
-        recentScores.push(...samples);
+        const recentSamples = recentScoreSamplesMap.get(candidate) || [];
+        recentScores.push(...recentSamples);
       });
+
+      const representativeScore = getRepresentativeScore(historyScores, recentScores);
 
       const recentAvgScore =
         recentScores.length > 0
@@ -299,8 +335,8 @@ export default function StatisticsPage() {
           : undefined;
 
       let baseState: PhonemeState = 'none';
-      if (minScore !== undefined) {
-        baseState = scoreToState(minScore);
+      if (representativeScore !== undefined) {
+        baseState = scoreToState(representativeScore);
       } else if (weakCount > 0) {
         baseState = 'poor';
       }
@@ -319,7 +355,7 @@ export default function StatisticsPage() {
       return {
         symbol: phoneme.p,
         baseState,
-        minScore,
+        representativeScore,
         weakCount,
         recoveredRecently,
       };
@@ -332,8 +368,8 @@ export default function StatisticsPage() {
           return a.recoveredRecently ? 1 : -1;
         }
         if (b.weakCount !== a.weakCount) return b.weakCount - a.weakCount;
-        const aScore = a.minScore ?? 101;
-        const bScore = b.minScore ?? 101;
+        const aScore = a.representativeScore ?? 101;
+        const bScore = b.representativeScore ?? 101;
         if (aScore !== bScore) return aScore - bScore;
         return a.symbol.localeCompare(b.symbol);
       });
@@ -362,7 +398,7 @@ export default function StatisticsPage() {
         return;
       }
 
-      map.set(item.symbol, 'none');
+      map.set(item.symbol, item.baseState === 'poor' ? 'good' : item.baseState);
     });
     return map;
   }, [historyEntries]);
