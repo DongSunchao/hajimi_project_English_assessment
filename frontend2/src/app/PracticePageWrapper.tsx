@@ -6,6 +6,8 @@ import svgPaths from "../imports/svg-ubr093inv5";
 import { ImageWithFallback } from './components/figma/ImageWithFallback';
 
 export function PracticePageWrapper() {
+  // console.error('Rendering PracticePageWrapper');
+
   const navigate = useNavigate();
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -94,7 +96,7 @@ export function PracticePageWrapper() {
                 <h1 className="text-[#f5f3e8] font-bold text-xl tracking-wide">
                   Speech Practice System
                 </h1>
-                <p className="text-[#d4cbb8] text-xs">Reynholm Industries IT Department</p>
+                <p className="text-[#d4cbb8] text-xs">Practice Makes Perfect</p>
               </div>
             </div>
 

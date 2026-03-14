@@ -22,6 +22,11 @@ import { ScoreResultCard } from './components/ScoreResultCard';
 import { AiAdviceCard, type AiAdvice } from './components/AiAdviceCard';
 import { AssessmentForm } from './components/AssessmentForm';
 import { DevModeIndicator } from './components/DevModeIndicator';
+// 在文件顶部的 imports 中追加：
+import { Bell, LogOut } from 'lucide-react';
+import { clsx } from 'clsx';
+import svgPaths from "../imports/svg-ubr093inv5";
+import { ImageWithFallback } from './components/figma/ImageWithFallback';
 
 type AssessmentMode = 'custom' | 'tongue-twister' | 'free';
 
@@ -40,6 +45,7 @@ const normalizeAudioDataUri = (audio: string): string => {
 export default function AssessmentPage() {
   const navigate = useNavigate();
   
+  // console.error('Rendering AssessmentPage');
   // State management
   const [mode, setMode] = useState<AssessmentMode>('tongue-twister');
   const [referenceText, setReferenceText] = useState(getRandomTongueTwister());
@@ -59,6 +65,8 @@ export default function AssessmentPage() {
   const [wasmStats, setWasmStats] = useState<any>(null);
   const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
   const [permissionError, setPermissionError] = useState<string | null>(null);
+// 在 AssessmentPage 内部其他 useState 下方追加：
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   // Refs
   const recorderRef = useRef<RecordRTC | null>(null);
@@ -404,39 +412,78 @@ export default function AssessmentPage() {
       });
   };
 
-  return (
-    <div className="min-h-screen retro-beige-bg text-[#2a2a2a] font-['Share_Tech_Mono',monospace] overflow-hidden">
-      {/* Header */}
-      <div className="bg-gradient-to-b from-[#3a3a3a] to-[#2a2a2a] border-b-4 border-[#1a1a1a] py-4 px-6 retro-shadow">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 border-3 border-[#f5f3e8] rounded-full bg-gradient-to-b from-[#f5f3e8] to-[#d4cbb8] flex items-center justify-center retro-key">
-              <span className="text-[#3a3a3a] font-bold text-2xl">R</span>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-[#f5f3e8]">PRONUNCIATION ASSESSMENT</h1>
-              <p className="text-xs text-[#d4cbb8]">Reynholm Industries • Speech Practice System</p>
-            </div>
-          </div>
-          
-          {/* Navigation */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => navigate('/')}
-              className="retro-key px-3 py-2 rounded border-2 bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] text-[#2a2a2a] border-[#3a3a3a] text-xs font-bold hover:scale-105 transition-transform"
-            >
-              HOME
-            </button>
-            <button
-              onClick={() => navigate('/statistics')}
-              className="retro-key px-3 py-2 rounded border-2 bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] text-[#2a2a2a] border-[#3a3a3a] text-xs font-bold hover:scale-105 transition-transform"
-            >
-              STATISTICS
-            </button>
-          </div>
-        </div>
+return (
+    // 确保外层有 relative 和 overflow-hidden
+    <div className="relative min-h-screen retro-beige-bg text-[#2a2a2a] font-['Share_Tech_Mono',monospace] overflow-hidden">
+      
+      {/* 统一的背景纹理 */}
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-10">
+        <ImageWithFallback 
+          src="https://images.unsplash.com/photo-1765734482991-7c60829a0bff?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aW50YWdlJTIwb2ZmaWNlJTIwZGVzayUyMDE5ODBzfGVufDF8fHx8MTc3MzQ4MDQzNXww&ixlib=rb-4.1.0&q=80&w=1080"
+          alt="Office texture"
+          className="absolute w-full h-full object-cover"
+        />
       </div>
 
+      {/* 使用 relative z-10 确保内容在背景之上 */}
+      <div className="relative z-10">
+        <header className="bg-gradient-to-b from-[#8a7a5f] to-[#6a5a4f] border-b-4 border-[#3a3a3a] py-3 px-8 retro-shadow">
+        <div className="flex items-center justify-between gap-8 max-w-[1440px] mx-auto">
+          <div className="flex items-center gap-4 flex-shrink-0">
+            <div className="flex flex-col items-center">
+              <div className="w-[50px] h-[50px] border-3 border-[#3a3a3a] rounded-full bg-gradient-to-b from-[#f5f3e8] to-[#d4cbb8] flex items-center justify-center retro-shadow">
+                <span className="text-[#3a3a3a] font-bold text-2xl">R</span>
+              </div>
+              <span className="text-[10px] text-[#f5f3e8] font-bold mt-0.5">INDUSTRIES</span>
+            </div>
+            <div>
+              <h1 className="text-[#f5f3e8] font-bold text-xl tracking-wide">
+                Speech Practice
+              </h1>
+              <p className="text-[#d4cbb8] text-xs">Practice makes perfect</p>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-x-auto max-w-[500px]" style={{ overflowX: 'scroll',scrollbarWidth: 'thin', scrollbarColor: '#6a5a4f #4a4a3a' }}>
+            <div className="flex items-center gap-2 pb-1">
+              <RetroNavButton label="Welcome" onClick={() => navigate('/')} />
+              <RetroNavButton label="Practice" active />
+              <RetroNavButton label="Statistics" onClick={() => navigate('/statistics')} />
+              <RetroNavButton label="History" onClick={() => navigate('/history')} />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 relative">
+            <div className="retro-key bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] border-2 border-[#3a3a3a] rounded p-2 relative">
+              <Bell className="w-5 h-5" />
+            </div>
+            <button 
+              onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+              className="retro-key flex items-center gap-2 bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] border-2 border-[#3a3a3a] rounded px-3 py-2"
+            >
+              <span className="text-[#2a2a2a] font-bold">User menu</span>
+              <svg className={clsx("w-3 h-3 text-[#2a2a2a] transition-transform", userDropdownOpen && "rotate-180")} fill="currentColor" viewBox="0 0 12 6">
+                <path d={svgPaths.p3e42a480} />
+              </svg>
+            </button>
+            {userDropdownOpen && (
+              <div className="absolute right-0 top-full mt-2 bg-[#f5f3e8] border-2 border-[#3a3a3a] rounded retro-shadow z-50 min-w-[180px]">
+                <div className="p-3 border-b border-[#3a3a3a]">
+                  <p className="text-[#2a2a2a] font-bold text-sm">Maurice Moss</p>
+                  <p className="text-[#6a6a6a] text-xs">IT Department</p>
+                </div>
+                <button 
+                  onClick={() => setUserDropdownOpen(false)}
+                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[#e8e0cd] transition-colors text-left"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span className="text-[#2a2a2a] text-sm">Logout</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
         {/* Assessment Form */}
@@ -569,6 +616,46 @@ export default function AssessmentPage() {
       
       {/* Dev Mode Indicator */}
       <DevModeIndicator />
+
+              {/* Footer */}
+        <div className="bg-gradient-to-b from-[#6a5a4f] to-[#5a4a3f] border-t-4 border-[#3a3a3a] py-3 px-8 text-center mt-6">
+          <p className="text-[#d4cbb8] text-xs">
+            Reynholm Industries • IT Department • Basement Level -1 • "We're not just here, we're also there!"
+          </p>
+        </div>
+
     </div>
+    </div>
+  );
+}
+
+interface RetroNavButtonProps {
+  label: string;
+  active?: boolean;
+  onClick?: () => void;
+}
+
+function RetroNavButton({ label, active = false, onClick }: RetroNavButtonProps) {
+  const [isPressed, setIsPressed] = useState(false);
+
+  const handleClick = () => {
+    setIsPressed(true);
+    setTimeout(() => setIsPressed(false), 100);
+    onClick?.();
+  };
+
+  return (
+    <button 
+      onClick={handleClick}
+      className={clsx(
+        "retro-key px-4 py-2 rounded border-2 font-bold text-sm transition-all flex-shrink-0",
+        active 
+          ? "bg-gradient-to-b from-[#5a8a5a] to-[#4a7a4a] text-white border-[#2a4a2a]" 
+          : "bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] text-[#2a2a2a] border-[#3a3a3a]",
+        isPressed && "retro-key-pressed"
+      )}
+    >
+      {label}
+    </button>
   );
 }

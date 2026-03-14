@@ -8,11 +8,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { fetchHistory, type HistoryEntry } from './utils/historyApi';
+import { Bell, LogOut } from 'lucide-react';
+import { clsx } from 'clsx';
+import svgPaths from "../imports/svg-ubr093inv5";
+import { ImageWithFallback } from './components/figma/ImageWithFallback';
 
 export default function HistoryPage() {
   const navigate = useNavigate();
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   useEffect(() => {
     loadHistory();
@@ -50,45 +55,82 @@ export default function HistoryPage() {
     });
   };
 
-  return (
-    <div className="min-h-screen retro-beige-bg text-[#2a2a2a] font-['Share_Tech_Mono',monospace]">
-      {/* Header */}
-      <div className="bg-gradient-to-b from-[#3a3a3a] to-[#2a2a2a] border-b-4 border-[#1a1a1a] py-4 px-6 retro-shadow">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 border-3 border-[#f5f3e8] rounded-full bg-gradient-to-b from-[#f5f3e8] to-[#d4cbb8] flex items-center justify-center retro-key">
-              <span className="text-[#3a3a3a] font-bold text-2xl">R</span>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-[#f5f3e8]">ASSESSMENT HISTORY</h1>
-              <p className="text-xs text-[#d4cbb8]">Reynholm Industries • Records Archive</p>
-            </div>
-          </div>
-          
-          {/* Navigation */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => navigate('/')}
-              className="retro-key px-3 py-2 rounded border-2 bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] text-[#2a2a2a] border-[#3a3a3a] text-xs font-bold hover:scale-105 transition-transform"
-            >
-              HOME
-            </button>
-            <button
-              onClick={() => navigate('/practice')}
-              className="retro-key px-3 py-2 rounded border-2 bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] text-[#2a2a2a] border-[#3a3a3a] text-xs font-bold hover:scale-105 transition-transform"
-            >
-              PRACTICE
-            </button>
-            <button
-              onClick={() => navigate('/statistics')}
-              className="retro-key px-3 py-2 rounded border-2 bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] text-[#2a2a2a] border-[#3a3a3a] text-xs font-bold hover:scale-105 transition-transform"
-            >
-              STATISTICS
-            </button>
-          </div>
-        </div>
+return (
+    // 添加了 relative 和 overflow-hidden
+    <div className="relative min-h-screen retro-beige-bg text-[#2a2a2a] font-['Share_Tech_Mono',monospace] overflow-hidden">
+      
+      {/* 统一的背景纹理 */}
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-10">
+        <ImageWithFallback 
+          src="https://images.unsplash.com/photo-1765734482991-7c60829a0bff?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aW50YWdlJTIwb2ZmaWNlJTIwZGVzayUyMDE5ODBzfGVufDF8fHx8MTc3MzQ4MDQzNXww&ixlib=rb-4.1.0&q=80&w=1080"
+          alt="Office texture"
+          className="absolute w-full h-full object-cover"
+        />
       </div>
 
+      {/* 使用 relative z-10 确保内容在背景之上 */}
+      <div className="relative z-10">
+        <header className="bg-gradient-to-b from-[#8a7a5f] to-[#6a5a4f] border-b-4 border-[#3a3a3a] py-3 px-8 retro-shadow">
+        <div className="flex items-center justify-between gap-8 max-w-[1440px] mx-auto">
+          {/* Logo & Title */}
+          <div className="flex items-center gap-4 flex-shrink-0">
+            <div className="flex flex-col items-center">
+              <div className="w-[50px] h-[50px] border-3 border-[#3a3a3a] rounded-full bg-gradient-to-b from-[#f5f3e8] to-[#d4cbb8] flex items-center justify-center retro-shadow">
+                <span className="text-[#3a3a3a] font-bold text-2xl">R</span>
+              </div>
+              <span className="text-[10px] text-[#f5f3e8] font-bold mt-0.5">INDUSTRIES</span>
+            </div>
+            <div>
+              <h1 className="text-[#f5f3e8] font-bold text-xl tracking-wide">
+                Practice History
+              </h1>
+              <p className="text-[#d4cbb8] text-xs">Only records</p>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <div className="flex-1 overflow-x-auto max-w-[500px]" style={{ overflowX: 'scroll',scrollbarWidth: 'thin', scrollbarColor: '#6a5a4f #4a4a3a' }}>
+            <div className="flex items-center gap-2 pb-1">
+              <RetroNavButton label="Welcome" onClick={() => navigate('/')} />
+              <RetroNavButton label="Practice" onClick={() => navigate('/practice')} />
+              <RetroNavButton label="Statistics" onClick={() => navigate('/statistics')} />
+              <RetroNavButton label="History" active />
+            </div>
+          </div>
+
+          {/* User Menu */}
+          <div className="flex items-center gap-3 relative">
+            <div className="retro-key bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] border-2 border-[#3a3a3a] rounded p-2 relative">
+              <Bell className="w-5 h-5" />
+            </div>
+            <button 
+              onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+              className="retro-key flex items-center gap-2 bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] border-2 border-[#3a3a3a] rounded px-3 py-2"
+            >
+              <span className="text-[#2a2a2a] font-bold">User menu</span>
+              <svg className={clsx("w-3 h-3 text-[#2a2a2a] transition-transform", userDropdownOpen && "rotate-180")} fill="currentColor" viewBox="0 0 12 6">
+                <path d={svgPaths.p3e42a480} />
+              </svg>
+            </button>
+            {userDropdownOpen && (
+              <div className="absolute right-0 top-full mt-2 bg-[#f5f3e8] border-2 border-[#3a3a3a] rounded retro-shadow z-50 min-w-[180px]">
+                <div className="p-3 border-b border-[#3a3a3a]">
+                  <p className="text-[#2a2a2a] font-bold text-sm">Maurice Moss</p>
+                  <p className="text-[#6a6a6a] text-xs">IT Department</p>
+                </div>
+                <button 
+                  onClick={() => setUserDropdownOpen(false)}
+                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[#e8e0cd] transition-colors text-left"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span className="text-[#2a2a2a] text-sm">Logout</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+      
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-6 py-8">
         {/* Filing Cabinet Header */}
@@ -96,7 +138,7 @@ export default function HistoryPage() {
           <div className="relative z-20 flex items-center gap-4">
             <div className="text-4xl">🗄️</div>
             <div>
-              <h2 className="crt-text text-2xl font-bold">ASSESSMENT RECORDS</h2>
+              <h2 className="crt-text text-2xl font-bold">PRACTICE RECORDS</h2>
               <p className="crt-text text-sm opacity-70">
                 {history.length} {history.length === 1 ? 'record' : 'records'} on file
               </p>
@@ -181,6 +223,44 @@ export default function HistoryPage() {
           </div>
         )}
       </div>
+              {/* Footer */}
+        <div className="bg-gradient-to-b from-[#6a5a4f] to-[#5a4a3f] border-t-4 border-[#3a3a3a] py-3 px-8 text-center mt-6">
+          <p className="text-[#d4cbb8] text-xs">
+            Reynholm Industries • IT Department • Basement Level -1 • "We're not just here, we're also there!"
+          </p>
+        </div>
+
     </div>
+    </div>
+  );
+}
+interface RetroNavButtonProps {
+  label: string;
+  active?: boolean;
+  onClick?: () => void;
+}
+
+function RetroNavButton({ label, active = false, onClick }: RetroNavButtonProps) {
+  const [isPressed, setIsPressed] = useState(false);
+
+  const handleClick = () => {
+    setIsPressed(true);
+    setTimeout(() => setIsPressed(false), 100);
+    onClick?.();
+  };
+
+  return (
+    <button 
+      onClick={handleClick}
+      className={clsx(
+        "retro-key px-4 py-2 rounded border-2 font-bold text-sm transition-all flex-shrink-0",
+        active 
+          ? "bg-gradient-to-b from-[#5a8a5a] to-[#4a7a4a] text-white border-[#2a4a2a]" 
+          : "bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] text-[#2a2a2a] border-[#3a3a3a]",
+        isPressed && "retro-key-pressed"
+      )}
+    >
+      {label}
+    </button>
   );
 }

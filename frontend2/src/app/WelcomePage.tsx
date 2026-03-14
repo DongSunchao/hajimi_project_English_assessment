@@ -11,17 +11,21 @@
  * - IT Crowd easter eggs and quotes
  */
 
-import React from 'react';
 import { useNavigate } from 'react-router';
 import { ImageWithFallback } from './components/figma/ImageWithFallback';
+import React, { useState } from 'react'; // 加上 useState
+import { Bell, LogOut } from 'lucide-react';
+import { clsx } from 'clsx';
+import svgPaths from "../imports/svg-ubr093inv5";
+
 
 export default function WelcomePage() {
   const navigate = useNavigate();
-
-  return (
-    <div className="relative min-h-screen retro-beige-bg text-[#2a2a2a] font-['Share_Tech_Mono',monospace] overflow-hidden">{/* retro-beige-bg is defined in theme.css */}
+const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+return (
+    <div className="relative min-h-screen retro-beige-bg text-[#2a2a2a] font-['Share_Tech_Mono',monospace] overflow-hidden">
       
-      {/* Background texture - vintage office desk image with low opacity */}
+      {/* 1. 这里是原有的背景图片，保持不变 */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-10">
         <ImageWithFallback 
           src="https://images.unsplash.com/photo-1765734482991-7c60829a0bff?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aW50YWdlJTIwb2ZmaWNlJTIwZGVzayUyMDE5ODBzfGVufDF8fHx8MTc3MzQ4MDQzNXww&ixlib=rb-4.1.0&q=80&w=1080"
@@ -30,35 +34,81 @@ export default function WelcomePage() {
         />
       </div>
 
-      {/* Main Container */}
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-8">
-        
-        {/* Reynholm Industries Logo */}
-        <div className="mb-8 text-center">
-          <div className="inline-block retro-shadow mb-4">
-            <div className="w-32 h-32 border-4 border-[#3a3a3a] rounded-full bg-gradient-to-b from-[#f5f3e8] to-[#d4cbb8] flex items-center justify-center retro-key">
-              <span className="text-[#3a3a3a] font-bold text-6xl">R</span>
+      {/* 👇 2. 插入全新的统一 Header (原本这里什么都没有) */}
+      <div className="relative z-20">
+        <header className="bg-gradient-to-b from-[#8a7a5f] to-[#6a5a4f] border-b-4 border-[#3a3a3a] py-3 px-8 retro-shadow">
+          <div className="flex items-center justify-between gap-8 max-w-[1440px] mx-auto">
+            {/* Logo & Title */}
+            <div className="flex items-center gap-4 flex-shrink-0">
+              <div className="flex flex-col items-center">
+                <div className="w-[50px] h-[50px] border-3 border-[#3a3a3a] rounded-full bg-gradient-to-b from-[#f5f3e8] to-[#d4cbb8] flex items-center justify-center retro-shadow">
+                  <span className="text-[#3a3a3a] font-bold text-2xl">R</span>
+                </div>
+                <span className="text-[10px] text-[#f5f3e8] font-bold mt-0.5">INDUSTRIES</span>
+              </div>
+              <div>
+                <h1 className="text-[#f5f3e8] font-bold text-xl tracking-wide">
+                  Reynholm Industries
+                </h1>
+                <p className="text-[#d4cbb8] text-xs">IT Department</p>
+              </div>
+            </div>
+
+            {/* 新的顶部导航栏 */}
+            <div className="flex-1 overflow-x-auto max-w-[500px]" style={{ overflowX: 'scroll',scrollbarWidth: 'thin', scrollbarColor: '#6a5a4f #4a4a3a' }}>
+              <div className="flex items-center gap-2 pb-1">
+                <RetroNavButton label="Welcome" active />
+                <RetroNavButton label="Practice" onClick={() => navigate('/practice')} />
+                <RetroNavButton label="Statistics" onClick={() => navigate('/statistics')} />
+                <RetroNavButton label="History" onClick={() => navigate('/history')} />
+              </div>
+            </div>
+
+            {/* 用户菜单 */}
+            <div className="flex items-center gap-3 relative">
+              <div className="retro-key bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] border-2 border-[#3a3a3a] rounded p-2 relative">
+                <Bell className="w-5 h-5" />
+              </div>
+              <button 
+                onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                className="retro-key flex items-center gap-2 bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] border-2 border-[#3a3a3a] rounded px-3 py-2"
+              >
+                <span className="text-[#2a2a2a] font-bold">User menu</span>
+                <svg className={clsx("w-3 h-3 text-[#2a2a2a] transition-transform", userDropdownOpen && "rotate-180")} fill="currentColor" viewBox="0 0 12 6">
+                  <path d={svgPaths.p3e42a480} />
+                </svg>
+              </button>
+              {userDropdownOpen && (
+                <div className="absolute right-0 top-full mt-2 bg-[#f5f3e8] border-2 border-[#3a3a3a] rounded retro-shadow z-50 min-w-[180px]">
+                  <div className="p-3 border-b border-[#3a3a3a]">
+                    <p className="text-[#2a2a2a] font-bold text-sm">Maurice Moss</p>
+                    <p className="text-[#6a6a6a] text-xs">IT Department</p>
+                  </div>
+                  <button 
+                    onClick={() => setUserDropdownOpen(false)}
+                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[#e8e0cd] transition-colors text-left"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span className="text-[#2a2a2a] text-sm">Logout</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-          <h1 className="text-5xl font-bold text-[#3a3a3a] mb-2">
-            Reynholm Industries
-          </h1>
-          <div className="text-xl text-[#5a5a5a] mb-1">
-            Personal History Practice Analysis
-          </div>
-          <div className="text-sm text-[#6a6a6a]">
-            IT Department • Basement Level -1
-          </div>
-        </div>
+        </header>
+      </div>
+      {/* 👆 Header 结束 */}
 
-        {/* Navigation - Horizontally scrollable */}
-        <div className="flex-1 overflow-x-auto max-w-[500px]" style={{ scrollbarWidth: 'thin', scrollbarColor: '#6a5a4f #4a4a3a' }}>
-          <div className="flex items-center gap-2 pb-1">
-            <RetroNavButton label="Welcome" active />
-            <RetroNavButton label="Practice" onClick={() => navigate('/practice')} />
-            <RetroNavButton label="Statistics" onClick={() => navigate('/statistics')} />
-            <RetroNavButton label="History" onClick={() => navigate('/history')} />
+      {/* 3. 修改 Main Container 的上边距，防止被顶部 Header 挡住 */}
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-100px)] p-4">
+        
+        {/* 巨大的 Logo 和标题 (保持不变) */}
+        <div className="mb-8 text-center">
+          <div className="w-24 h-24 mx-auto mb-4 border-4 border-[#3a3a3a] rounded-full bg-gradient-to-b from-[#f5f3e8] to-[#d4cbb8] flex items-center justify-center retro-shadow">
+            <span className="text-[#3a3a3a] font-bold text-5xl">R</span>
           </div>
+          <h1 className="text-3xl font-bold mb-2 tracking-widest uppercase">Reynholm Industries</h1>
+          <p className="text-[#6a6a6a] tracking-widest">IT Department - Employee Assessment Portal</p>
         </div>
 
         {/* Welcome Message - CRT Style */}
@@ -123,15 +173,18 @@ export default function WelcomePage() {
           <p>Reynholm Industries © {new Date().getFullYear()}</p>
           <p className="mt-1">"We're not just here, we're also there!"</p>
         </div>
+        {/* Footer */}
+        {/* <div className="bg-gradient-to-b from-[#6a5a4f] to-[#5a4a3f] border-t-4 border-[#3a3a3a] py-3 px-8 text-center mt-6">
+          <p className="text-[#d4cbb8] text-xs">
+            Reynholm Industries • IT Department • Basement Level -1 • "We're not just here, we're also there!"
+          </p>
+        </div> */}
+
       </div>
     </div>
   );
 }
 
-/**
- * RetroNavButton Component
- * Reusable navigation button with retro 3D styling
- */
 interface RetroNavButtonProps {
   label: string;
   active?: boolean;
@@ -139,7 +192,7 @@ interface RetroNavButtonProps {
 }
 
 function RetroNavButton({ label, active = false, onClick }: RetroNavButtonProps) {
-  const [isPressed, setIsPressed] = React.useState(false);
+  const [isPressed, setIsPressed] = useState(false);
 
   const handleClick = () => {
     setIsPressed(true);
@@ -150,13 +203,16 @@ function RetroNavButton({ label, active = false, onClick }: RetroNavButtonProps)
   return (
     <button 
       onClick={handleClick}
-      className={`retro-key px-4 py-2 rounded border-2 font-bold text-sm transition-all flex-shrink-0 ${
+      className={clsx(
+        "retro-key px-4 py-2 rounded border-2 font-bold text-sm transition-all flex-shrink-0",
         active 
           ? "bg-gradient-to-b from-[#5a8a5a] to-[#4a7a4a] text-white border-[#2a4a2a]" 
-          : "bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] text-[#2a2a2a] border-[#3a3a3a]"
-      } ${isPressed ? "retro-key-pressed" : ""}`}
+          : "bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] text-[#2a2a2a] border-[#3a3a3a]",
+        isPressed && "retro-key-pressed"
+      )}
     >
       {label}
     </button>
+    
   );
 }
