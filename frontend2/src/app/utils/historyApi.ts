@@ -5,7 +5,7 @@
  */
 
 import { config } from '../config';
-import { joinApiUrl, unwrapBody, handleApiError } from './apiUtils';
+import { joinApiUrl, unwrapBody } from './apiUtils';
 
 export interface HistoryEntry {
   id: string;
@@ -17,6 +17,16 @@ export interface HistoryEntry {
   fluency: number;
   completeness: number;
 }
+
+const getOrCreateUserId = (): string => {
+  const key = 'hajimi_user_id';
+  const existing = localStorage.getItem(key);
+  if (existing) return existing;
+
+  const generated = `user-${crypto.randomUUID()}`;
+  localStorage.setItem(key, generated);
+  return generated;
+};
 
 /**
  * Check if we're in development mode without backend
@@ -40,17 +50,45 @@ export async function fetchHistory(): Promise<HistoryEntry[]> {
 
   try {
     const url = joinApiUrl(config.api.baseUrl, config.api.endpoints.history);
+    const userId = getOrCreateUserId();
     const response = await fetch(url, {
-      method: 'GET',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId }),
     });
     
     if (!response.ok) {
       throw new Error(`Failed to fetch history: ${response.statusText}`);
     }
     
-    const data = await response.json();
-    return unwrapBody(data);
+    const data = unwrapBody(await response.json());
+    const dbItems = data.history || [];
+
+    const mappedHistory: HistoryEntry[] = dbItems.map((item: any) => {
+      const rawTs = item.timestamp;
+      const timestampNumber = typeof rawTs === 'number' ? rawTs : Number(rawTs);
+      const timestamp = Number.isFinite(timestampNumber)
+        ? new Date(timestampNumber * 1000).toISOString()
+        : new Date(rawTs).toISOString();
+
+      const overallScore = Number(item.score || 0);
+      const fluency = item.fluencyScore !== undefined ? Number(item.fluencyScore) : overallScore;
+      const accuracy = item.accuracyScore !== undefined ? Number(item.accuracyScore) : overallScore;
+      const completeness = item.completenessScore !== undefined ? Number(item.completenessScore) : 100;
+
+      return {
+        id: String(rawTs ?? crypto.randomUUID()),
+        timestamp,
+        referenceText: item.referenceText || item.recognizedText || 'No text recorded',
+        overallScore,
+        pronunciation: accuracy,
+        accuracy,
+        fluency,
+        completeness,
+      };
+    });
+
+    return mappedHistory;
   } catch (error) {
     console.info('[History API] Backend unavailable, using mock data');
     // Silently fallback to mock data

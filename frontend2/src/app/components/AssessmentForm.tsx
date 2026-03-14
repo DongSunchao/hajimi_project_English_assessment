@@ -11,13 +11,17 @@ import { getRandomTongueTwister } from '../utils/tongueTwisters';
 interface AssessmentFormProps {
   referenceText: string;
   onReferenceTextChange: (text: string) => void;
-  mode: 'custom' | 'tongue-twister';
-  onModeChange: (mode: 'custom' | 'tongue-twister') => void;
+  topicText: string;
+  onTopicTextChange: (text: string) => void;
+  mode: 'custom' | 'tongue-twister' | 'free';
+  onModeChange: (mode: 'custom' | 'tongue-twister' | 'free') => void;
 }
 
 export function AssessmentForm({
   referenceText,
   onReferenceTextChange,
+  topicText,
+  onTopicTextChange,
   mode,
   onModeChange,
 }: AssessmentFormProps) {
@@ -50,6 +54,16 @@ export function AssessmentForm({
           }`}
         >
           TONGUE TWISTER
+        </button>
+        <button
+          onClick={() => onModeChange('free')}
+          className={`retro-key px-4 py-2 rounded border-2 font-bold text-sm transition-all ${
+            mode === 'free'
+              ? 'bg-gradient-to-b from-[#5a8a5a] to-[#4a7a4a] text-white border-[#2a4a2a]'
+              : 'bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] text-[#2a2a2a] border-[#3a3a3a]'
+          }`}
+        >
+          FREE TALK
         </button>
       </div>
 
@@ -87,6 +101,23 @@ export function AssessmentForm({
           </button>
           <p className="text-xs text-[#6a6a6a] mt-2 text-center">
             Click to get a new random tongue twister
+          </p>
+        </div>
+      )}
+
+      {mode === 'free' && (
+        <div>
+          <label className="block text-sm font-bold text-[#2a2a2a] mb-2 font-['Share_Tech_Mono',monospace]">
+            ENTER TOPIC FOR FREE TALK:
+          </label>
+          <textarea
+            value={topicText}
+            onChange={(e) => onTopicTextChange(e.target.value)}
+            className="w-full px-4 py-3 border-3 border-[#3a3a3a] rounded bg-white text-[#2a2a2a] font-['Share_Tech_Mono',monospace] text-sm resize-vertical min-h-[90px] focus:outline-none focus:border-[#5a8a5a]"
+            placeholder="Example: Introduce yourself, job interview, travel, hobbies..."
+          />
+          <p className="text-xs text-[#6a6a6a] mt-1">
+            You can speak naturally around this topic. No fixed script is required.
           </p>
         </div>
       )}

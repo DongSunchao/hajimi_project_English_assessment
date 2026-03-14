@@ -1,9 +1,26 @@
 /**
  * WebAssembly Audio Processing Utilities
- * 
- * Handles audio resampling and format conversion using client-side WASM.
- * This reduces payload size and improves performance for speech assessment.
+ *
+ * Real processing path:
+ * 1) JS resample to target sample rate
+ * 2) WASM edge-trimming (silence/noise edge removal)
+ * 3) Encode to WAV
  */
+
+type WasmModule = {
+  cwrap: (name: string, returnType: string, argTypes: string[]) => (...args: number[]) => number;
+  _malloc: (size: number) => number;
+  _free: (ptr: number) => void;
+  wasmMemory: WebAssembly.Memory;
+};
+
+declare global {
+  interface Window {
+    createWasmModule?: () => Promise<WasmModule>;
+  }
+}
+
+let wasmInstance: WasmModule | null = null;
 
 /**
  * Resamples audio data from original sample rate to target sample rate
@@ -44,6 +61,34 @@ export function resampleAudio(
   }
 
   return resampledData;
+}
+
+export async function runWasmAudioProcessing(audioData: Float32Array): Promise<Float32Array> {
+  if (!wasmInstance) {
+    if (typeof window.createWasmModule === 'undefined') {
+      throw new Error('WASM bridge is not loaded. Ensure /wasm/audio_engine.js is included in index.html');
+    }
+    wasmInstance = await window.createWasmModule();
+  }
+
+  const processAudioEdge = wasmInstance.cwrap('process_audio_edge', 'number', ['number', 'number']);
+
+  const length = audioData.length;
+  const bufferPtr = wasmInstance._malloc(length * 4);
+
+  try {
+    const getHeapF32 = () => new Float32Array(wasmInstance!.wasmMemory.buffer);
+    getHeapF32().set(audioData, bufferPtr >>> 2);
+
+    const newLength = processAudioEdge(bufferPtr, length);
+    if (newLength <= 0) {
+      throw new Error('Audio is too quiet or fully trimmed by WASM.');
+    }
+
+    return getHeapF32().slice(bufferPtr >>> 2, (bufferPtr >>> 2) + newLength);
+  } finally {
+    wasmInstance._free(bufferPtr);
+  }
 }
 
 /**
@@ -99,7 +144,8 @@ export function calculateAudioStats(
   originalSize: number,
   processedSize: number,
   originalSampleRate: number,
-  targetSampleRate: number
+  targetSampleRate: number,
+  engine: 'wasm' | 'js-fallback' = 'wasm'
 ) {
   const savedBytes = originalSize - processedSize;
   const savedPercentage = ((savedBytes / originalSize) * 100).toFixed(1);
@@ -111,5 +157,6 @@ export function calculateAudioStats(
     savedPercentage,
     originalSampleRate,
     targetSampleRate,
+    engine,
   };
 }

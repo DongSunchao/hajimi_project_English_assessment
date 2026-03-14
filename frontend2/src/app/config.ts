@@ -11,10 +11,13 @@ export const config = {
    * Base URL should be set via environment variable in production
    */
   api: {
-    baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
+    baseUrl: import.meta.env.VITE_API_BASE_URL,
     endpoints: {
+      getUploadUrl: 'get-upload-url',
+      score: 'score',
       scoreFree: 'score-free',
       aiTutor: 'ai-tutor',
+      genVoice: 'gen-voice',
       history: 'history',
       tongueTwister: 'tongue-twister',
     },

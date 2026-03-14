@@ -14,7 +14,7 @@ import { useNavigate } from 'react-router';
 import RecordRTC from 'recordrtc';
 import { config } from './config';
 import { joinApiUrl, unwrapBody } from './utils/apiUtils';
-import { resampleAudio, float32ArrayToWav, calculateAudioStats } from './utils/wasmAudio';
+import { resampleAudio, runWasmAudioProcessing, float32ArrayToWav, calculateAudioStats } from './utils/wasmAudio';
 import { getRandomTongueTwister } from './utils/tongueTwisters';
 import { useStateWithRef } from './hooks/useStateWithRef';
 import { RecordingPanel } from './components/RecordingPanel';
@@ -23,7 +23,7 @@ import { AiAdviceCard, type AiAdvice } from './components/AiAdviceCard';
 import { AssessmentForm } from './components/AssessmentForm';
 import { DevModeIndicator } from './components/DevModeIndicator';
 
-type AssessmentMode = 'custom' | 'tongue-twister';
+type AssessmentMode = 'custom' | 'tongue-twister' | 'free';
 
 export default function AssessmentPage() {
   const navigate = useNavigate();
@@ -31,13 +31,19 @@ export default function AssessmentPage() {
   // State management
   const [mode, setMode] = useState<AssessmentMode>('tongue-twister');
   const [referenceText, setReferenceText] = useState(getRandomTongueTwister());
+  const [topicText, setTopicText] = useState('General Practice');
+  const [recognizedText, setRecognizedText] = useState<string>('');
   const [isRecording, setIsRecording, isRecordingRef] = useStateWithRef(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [scoreResult, setScoreResult] = useState<any>(null);
   const [aiAdvice, setAiAdvice] = useState<AiAdvice | null>(null);
+  const [quickTip, setQuickTip] = useState<string | null>(null);
+  const [currentS3FileName, setCurrentS3FileName] = useState<string>('');
+  const [clonedAudio, setClonedAudio] = useState<string | null>(null);
   const [isLoadingScore, setIsLoadingScore] = useState(false);
   const [isLoadingAi, setIsLoadingAi] = useState(false);
+  const [isVoiceLoading, setIsVoiceLoading] = useState(false);
   const [wasmStats, setWasmStats] = useState<any>(null);
   const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
   const [permissionError, setPermissionError] = useState<string | null>(null);
@@ -89,6 +95,8 @@ export default function AssessmentPage() {
       setAudioUrl(null);
       setScoreResult(null);
       setAiAdvice(null);
+      setQuickTip(null);
+      setClonedAudio(null);
       setWasmStats(null);
 
       // Auto-stop after max duration
@@ -138,6 +146,16 @@ export default function AssessmentPage() {
     });
   };
 
+  const getOrCreateUserId = () => {
+    const key = 'hajimi_user_id';
+    const existing = localStorage.getItem(key);
+    if (existing) return existing;
+
+    const generated = `user-${crypto.randomUUID()}`;
+    localStorage.setItem(key, generated);
+    return generated;
+  };
+
   // Process audio with WASM (client-side resampling)
   const processAudioWithWasm = async (blob: Blob) => {
     try {
@@ -145,30 +163,49 @@ export default function AssessmentPage() {
       const audioContext = new AudioContext();
       const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
-      // Resample to target sample rate
+      // Resample first, then run real WASM edge-trimming
       const resampledData = resampleAudio(audioBuffer, config.recording.desiredSampRate);
-      const resampledBlob = float32ArrayToWav(resampledData, config.recording.desiredSampRate);
+      const wasmProcessedData = await runWasmAudioProcessing(resampledData);
+      const processedBlob = float32ArrayToWav(wasmProcessedData, config.recording.desiredSampRate);
 
       // Calculate stats
       const stats = calculateAudioStats(
         blob.size,
-        resampledBlob.size,
+        processedBlob.size,
         audioBuffer.sampleRate,
-        config.recording.desiredSampRate
+        config.recording.desiredSampRate,
+        'wasm'
       );
       setWasmStats(stats);
 
       // Set audio for playback and scoring
-      const url = URL.createObjectURL(resampledBlob);
+      const url = URL.createObjectURL(processedBlob);
       setAudioUrl(url);
-      setAudioBlob(resampledBlob);
+      setAudioBlob(processedBlob);
 
     } catch (error) {
-      console.error('Error processing audio:', error);
-      // Fallback to original blob
-      const url = URL.createObjectURL(blob);
+      console.warn('WASM processing failed, fallback to JS-only resampling:', error);
+
+      // Fallback path: keep app functional even if wasm bridge/module fails
+      const arrayBuffer = await blob.arrayBuffer();
+      const audioContext = new AudioContext();
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+      const resampledData = resampleAudio(audioBuffer, config.recording.desiredSampRate);
+      const fallbackBlob = float32ArrayToWav(resampledData, config.recording.desiredSampRate);
+
+      const stats = calculateAudioStats(
+        blob.size,
+        fallbackBlob.size,
+        audioBuffer.sampleRate,
+        config.recording.desiredSampRate,
+        'js-fallback'
+      );
+      setWasmStats(stats);
+
+      const url = URL.createObjectURL(fallbackBlob);
       setAudioUrl(url);
-      setAudioBlob(blob);
+      setAudioBlob(fallbackBlob);
     }
   };
 
@@ -178,23 +215,99 @@ export default function AssessmentPage() {
 
     setIsLoadingScore(true);
     try {
-      const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.wav');
-      formData.append('referenceText', referenceText);
+      const apiBaseUrl = config.api.baseUrl;
+      const userId = getOrCreateUserId();
 
-      const url = joinApiUrl(config.api.baseUrl, config.api.endpoints.scoreFree);
-      const response = await fetch(url, {
+      const presignRes = await fetch(joinApiUrl(apiBaseUrl, config.api.endpoints.getUploadUrl));
+      if (!presignRes.ok) {
+        throw new Error(`Failed to get upload url: ${presignRes.status}`);
+      }
+
+      const { upload_url, file_name } = unwrapBody(await presignRes.json());
+      if (!upload_url || !file_name) {
+        throw new Error('Invalid upload url response from backend');
+      }
+      setCurrentS3FileName(file_name);
+
+      const uploadRes = await fetch(upload_url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'audio/wav' },
+        body: audioBlob,
+      });
+      if (!uploadRes.ok) {
+        throw new Error(`Failed to upload audio: ${uploadRes.status}`);
+      }
+
+      const isScriptedMode = mode !== 'free';
+      const scoreEndpoint = isScriptedMode
+        ? joinApiUrl(apiBaseUrl, config.api.endpoints.score)
+        : joinApiUrl(apiBaseUrl, config.api.endpoints.scoreFree);
+
+      let finalTopic = 'General Practice';
+      if (mode === 'free') {
+        finalTopic = topicText.trim() ? `Free Talk: ${topicText.trim()}` : 'Free Talk';
+      } else if (mode === 'tongue-twister') {
+        finalTopic = 'Tongue Twister';
+      } else if (mode === 'custom') {
+        finalTopic = 'Reading Practice';
+      }
+
+      const scorePayload = isScriptedMode
+        ? {
+            fileName: file_name,
+            referenceText,
+            userId,
+            topic: finalTopic,
+          }
+        : {
+            fileName: file_name,
+            userId,
+            topic: finalTopic,
+          };
+
+      const response = await fetch(scoreEndpoint, {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(scorePayload),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get score');
+        const errorText = await response.text();
+        throw new Error(`Scoring failed: ${response.status} ${errorText}`);
       }
 
-      const data = await response.json();
-      const result = unwrapBody(data);
-      setScoreResult(result);
+      const scoreData = unwrapBody(await response.json());
+      if (scoreData.RecognitionStatus && scoreData.RecognitionStatus !== 'Success') {
+        throw new Error(`Azure rejected request: ${scoreData.RecognitionStatus}`);
+      }
+
+      const nbest = scoreData.NBest?.[0];
+      if (!nbest) {
+        throw new Error('Invalid scoring response: missing NBest');
+      }
+
+      const recognized = scoreData.RecognizedText || scoreData.DisplayText || nbest.Display || nbest.Lexical || '';
+      setRecognizedText(recognized);
+
+      setScoreResult({
+        overallScore: Math.round(nbest.PronScore || 0),
+        pronunciation: Math.round(nbest.PronScore || 0),
+        accuracy: Math.round(nbest.AccuracyScore || 0),
+        fluency: Math.round(nbest.FluencyScore || 0),
+        completeness: Math.round(nbest.CompletenessScore || 0),
+      });
+
+      requestAiTutor({
+        userId,
+        recognizedText: recognized || '',
+        mode: 'quick',
+      })
+        .then((result) => {
+          setQuickTip(result.quick_tip || null);
+        })
+        .catch((err) => {
+          console.warn('Quick AI tip retrieval failed:', err);
+        });
     } catch (error) {
       console.info('[Assessment API] Backend unavailable, using mock scores');
       // Mock response for development
@@ -210,46 +323,78 @@ export default function AssessmentPage() {
     }
   };
 
+  const requestAiTutor = async ({ userId, recognizedText, mode }: { userId: string; recognizedText: string; mode: 'quick' | 'deep' }) => {
+    const url = joinApiUrl(config.api.baseUrl, config.api.endpoints.aiTutor);
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, recognizedText, mode }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`AI tutor API error, status code: ${response.status}, response: ${errorText}`);
+    }
+
+    return unwrapBody(await response.json());
+  };
+
   // Request AI advice
   const requestAiAdvice = async () => {
-    if (!scoreResult) return;
-
-    setIsLoadingAi(true);
-    try {
-      const url = joinApiUrl(config.api.baseUrl, config.api.endpoints.aiTutor);
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          referenceText,
-          score: scoreResult,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to get AI advice');
-      }
-
-      const data = await response.json();
-      const advice = unwrapBody(data);
-      setAiAdvice(advice);
-    } catch (error) {
-      console.info('[AI Tutor API] Backend unavailable, using mock advice');
-      // Mock response for development
-      setAiAdvice({
-        greeting: "Hello! I've analyzed your pronunciation and identified areas for improvement.",
-        targetSound: "TH sound (/θ/ and /ð/)",
-        tongueTwister: "The thirty-three thieves thought that they thrilled the throne.",
-        tip: "Place your tongue between your teeth and blow air gently for the 'th' sound. Practice makes perfect!",
-        practices: [
-          "Say 'th' slowly 10 times, focusing on tongue placement",
-          "Practice words: think, that, three, father, mother",
-          "Record yourself and compare with native speakers",
-        ],
-      });
-    } finally {
-      setIsLoadingAi(false);
+    if (!currentS3FileName || !recognizedText) {
+      alert('Please complete a recording assessment first.');
+      return;
     }
+
+    const userId = getOrCreateUserId();
+    setIsLoadingAi(true);
+    setIsVoiceLoading(true);
+    setAiAdvice(null);
+    setClonedAudio(null);
+
+    requestAiTutor({
+      userId,
+      recognizedText: recognizedText || '',
+      mode: 'deep',
+    })
+      .then((advice) => {
+        setAiAdvice(advice);
+      })
+      .catch((err) => {
+        console.error('AI tutor call failed:', err);
+      })
+      .finally(() => {
+        setIsLoadingAi(false);
+      });
+
+    fetch(joinApiUrl(config.api.baseUrl, config.api.endpoints.genVoice), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fileName: currentS3FileName,
+        text: recognizedText,
+      }),
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const errorDetail = await res.text();
+          throw new Error(`Voice API error: ${res.status} - ${errorDetail}`);
+        }
+        const data = await res.json();
+        return unwrapBody(data);
+      })
+      .then((data) => {
+        const audioData = data.audio_base64 || data.audioBase64;
+        if (audioData) {
+          setClonedAudio(audioData);
+        }
+      })
+      .catch((err) => {
+        console.error('Voice cloning API failed (silent fallback):', err);
+      })
+      .finally(() => {
+        setIsVoiceLoading(false);
+      });
   };
 
   return (
@@ -291,6 +436,8 @@ export default function AssessmentPage() {
         <AssessmentForm
           referenceText={referenceText}
           onReferenceTextChange={setReferenceText}
+          topicText={topicText}
+          onTopicTextChange={setTopicText}
           mode={mode}
           onModeChange={setMode}
         />
@@ -345,7 +492,7 @@ export default function AssessmentPage() {
             <div className="flex items-center gap-3 text-xs text-[#4a4a4a] font-['Share_Tech_Mono',monospace]">
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 rounded-full bg-[#5fc77f]" />
-                <span>WASM PROCESSING COMPLETE</span>
+                <span>{wasmStats.engine === 'wasm' ? 'WASM PROCESSING COMPLETE' : 'JS FALLBACK PROCESSING'}</span>
               </div>
               <span>•</span>
               <span>FROM: {wasmStats.originalSampleRate}Hz</span>
@@ -383,13 +530,20 @@ export default function AssessmentPage() {
               completeness={scoreResult.completeness}
             />
 
+            {quickTip && (
+              <div className="retro-paper border-2 border-[#3a3a3a] rounded p-4 retro-shadow">
+                <div className="text-xs font-bold text-[#5a5a5a] mb-1">AI QUICK TIP</div>
+                <p className="text-sm text-[#2a2a2a]">{quickTip}</p>
+              </div>
+            )}
+
             {config.features.enableAiTutor && !aiAdvice && (
               <button
                 onClick={requestAiAdvice}
-                disabled={isLoadingAi}
+                disabled={isLoadingAi || isVoiceLoading}
                 className="retro-key w-full bg-gradient-to-b from-[#a0a0f0] to-[#8080d0] border-3 border-[#4a4a8a] text-[#2a2a2a] font-bold py-4 px-6 rounded-lg text-base hover:scale-105 transition-transform disabled:opacity-50"
               >
-                {isLoadingAi ? 'CONSULTING AI...' : '🤖 GET AI TUTOR ADVICE'}
+                {(isLoadingAi || isVoiceLoading) ? 'GENERATING DEEP ANALYSIS + VOICE...' : '🤖 GET IN-DEPTH AI + CLONED VOICE'}
               </button>
             )}
           </div>
@@ -397,6 +551,13 @@ export default function AssessmentPage() {
 
         {/* AI Advice */}
         {aiAdvice && <AiAdviceCard advice={aiAdvice} />}
+
+        {clonedAudio && (
+          <div className="retro-paper border-4 border-[#3a3a3a] rounded-lg p-6 retro-shadow">
+            <label className="block text-sm font-bold text-[#2a2a2a] mb-3">CLONED VOICE:</label>
+            <audio controls src={`data:audio/mp3;base64,${clonedAudio}`} className="w-full" />
+          </div>
+        )}
       </div>
       
       {/* Dev Mode Indicator */}
