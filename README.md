@@ -4,6 +4,13 @@ GitHub README English Version
 
 Hajimi English is an intelligent pronunciation analysis and voice cloning platform built on a high-performance, serverless, multi-cloud architecture. It does more than score spoken English: it identifies phonetic patterns, tracks persistent weaknesses, and generates personalized feedback.
 
+our app has deployed on AWS cloudfront:https://d32exl1srs8962.cloudfront.net/
+
+QR:
+
+![CloudFront QR](frontend/public/qrcode_d32exl1srs8962.cloudfront.net.png)
+
+
 ## Technical Highlights
 
 - **Low-Latency Serverless Architecture**
@@ -38,3 +45,4 @@ Pronunciation data is stored in a sparse map format to reduce DynamoDB write cos
 | `timestamp` | Number (Sort Key) | Unix epoch timestamp |
 | `score` | Number | Overall pronunciation accuracy score from 0 to 100 |
 | `phonemeScores` | Map | Example: `{ "th": 65, "r": 82 }`, storing the weakest phoneme scores in the session |
+
