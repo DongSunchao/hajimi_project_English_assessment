@@ -22,11 +22,11 @@ export interface HistoryEntry {
 }
 
 const getOrCreateUserId = (): string => {
-  const key = 'hajimi_user_id';
+  const key = 'app_user_id';
   const existing = localStorage.getItem(key);
   if (existing) return existing;
 
-  const generated = `user-${crypto.randomUUID()}`;
+  const generated = crypto.randomUUID();
   localStorage.setItem(key, generated);
   return generated;
 };
@@ -89,8 +89,8 @@ export async function fetchHistory(): Promise<HistoryEntry[]> {
         accuracy,
         fluency,
         completeness,
-        weakPhonemes: [] as string[],
-        phonemeScores: {} as Record<string, number>,
+        weakPhonemes: item.weakPhonemes || [],
+        phonemeScores: item.phonemeScores || {},
       };
     });
 

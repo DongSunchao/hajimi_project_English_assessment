@@ -66,9 +66,15 @@ const PHONEMES_US = PHONEMES_UK.map((p) => ({
 
 type PhonemeState = 'none' | 'excellent' | 'good' | 'poor';
 
+const MAX_RED_PHONEMES = 5;
+const MAX_YELLOW_PHONEMES = 8;
+const RECENT_WINDOW = 5;
+const RECENT_MIN_SAMPLES_FOR_RECOVERY = 3;
+const RECENT_RECOVERY_SCORE = 80;
+
 const scoreToState = (score: number): PhonemeState => {
-  if (score >= 85) return 'excellent';
-  if (score >= 70) return 'good';
+  if (score >= 90) return 'excellent';
+  if (score >= 75) return 'good';
   return 'poor';
 };
 
@@ -77,19 +83,73 @@ const normalizePhoneme = (value: string): string => {
     .toLowerCase()
     .replace(/\//g, '')
     .replace(/ː/g, '')
+    .replace(/\d/g, '')
     .replace(/\s+/g, '');
 };
 
 const PHONEME_ALIASES: Record<string, string[]> = {
-  '/θ/': ['th'],
-  '/ð/': ['dh'],
-  '/ʃ/': ['sh'],
-  '/ʒ/': ['zh'],
-  '/tʃ/': ['ch'],
-  '/dʒ/': ['jh'],
-  '/ŋ/': ['ng'],
-  '/ɜː/': ['er'],
-  '/ə/': ['ax'],
+  // ==========================================
+  // 🟢 Vowels
+  // ==========================================
+  
+  '/iː/': ['i', 'iy', 'i:'],
+  '/ɪ/': ['ɪ', 'ih', 'I', 'i'],
+  
+  '/e/': ['e', 'ɛ', 'eh'],
+  '/æ/': ['æ', 'ae'],
+  
+  '/ɑː/': ['ɑ', 'aa', 'ɑ:', 'ar'], 
+  '/ɒ/': ['ɒ', 'aa', 'o', 'ɑ', 'ah'],                   
+  '/ɔː/': ['ɔ', 'ao', 'ɔ:', 'aa', 'ɑ', 'o', 'ɒ', 'aw'], 
+
+  '/ʊ/': ['ʊ', 'uh'],
+  '/uː/': ['u', 'uw', 'u:'],
+  
+
+  '/ʌ/': ['ʌ', 'ah', 'ə'],
+  '/ɜː/': ['ɜ', 'er', 'ɜ:', 'ɝ', 'ɚ'],
+  '/ə/':  ['ə', 'ax', 'ah', 'ɚ', 'er'], 
+  
+
+  '/eɪ/': ['eɪ', 'ey', 'ei'],
+  '/aɪ/': ['aɪ', 'ay', 'ai'],
+  '/ɔɪ/': ['ɔɪ', 'oy', 'oi'],
+  '/aʊ/': ['aʊ', 'aw', 'au'],
+  '/əʊ/': ['əʊ', 'oʊ', 'ow', 'ou', 'o'], 
+  
+  
+  '/ɪə/': ['ɪə', 'ɪr', 'ir', 'iə', 'iɚ'], 
+  '/eə/': ['eə', 'ɛə', 'er', 'ɛr', 'eɚ'], 
+  '/ʊə/': ['ʊə', 'ʊr', 'ur', 'uə', 'uɚ'], 
+
+  // ==========================================
+  // 🔵 Consonants
+  // ==========================================
+  '/p/': ['p'],
+  '/b/': ['b'],
+  '/t/': ['t', 'ɾ'], 
+  '/d/': ['d', 'ɾ'],
+  '/k/': ['k'],
+  '/g/': ['g', 'ɡ'], 
+  '/f/': ['f'],
+  '/v/': ['v'],
+  '/θ/': ['θ', 'th'],
+  '/ð/': ['ð', 'dh'],
+  '/s/': ['s'],
+  '/z/': ['z'],
+  '/ʃ/': ['ʃ', 'sh'],
+  '/ʒ/': ['ʒ', 'zh'],
+  '/tʃ/': ['tʃ', 'ch', 'ʧ'],
+  '/dʒ/': ['dʒ', 'jh', 'ʤ'],
+  
+  '/m/': ['m'],
+  '/n/': ['n'],
+  '/ŋ/': ['ŋ', 'ng'],
+  '/l/': ['l'],
+  '/r/': ['r', 'ɹ'], 
+  '/j/': ['j', 'y'],
+  '/w/': ['w'],
+  '/h/': ['h']
 };
 
 /**
@@ -176,10 +236,17 @@ export default function StatisticsPage() {
   }, []);
 
   const phonemeStates = useMemo(() => {
-    const scoreMap = new Map<string, number>();
-    const weakSet = new Set<string>();
+    const sortedHistory = [...historyEntries].sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+    const recentHistory = sortedHistory.slice(0, RECENT_WINDOW);
 
-    historyEntries.forEach((entry) => {
+    const scoreMap = new Map<string, number>();
+    const weakCountMap = new Map<string, number>();
+    const recentScoreSamplesMap = new Map<string, number[]>();
+    const recentWeakCountMap = new Map<string, number>();
+
+    sortedHistory.forEach((entry) => {
       Object.entries(entry.phonemeScores || {}).forEach(([phoneme, score]) => {
         const normalized = normalizePhoneme(phoneme);
         if (!normalized) return;
@@ -192,37 +259,124 @@ export default function StatisticsPage() {
       });
 
       (entry.weakPhonemes || []).forEach((phoneme) => {
-        weakSet.add(normalizePhoneme(phoneme));
+        const normalized = normalizePhoneme(phoneme);
+        if (!normalized) return;
+        weakCountMap.set(normalized, (weakCountMap.get(normalized) || 0) + 1);
       });
     });
 
-    const resolveState = (symbol: string): PhonemeState => {
+    recentHistory.forEach((entry) => {
+      Object.entries(entry.phonemeScores || {}).forEach(([phoneme, score]) => {
+        const normalized = normalizePhoneme(phoneme);
+        if (!normalized) return;
+
+        const numericScore = Number(score);
+        if (!Number.isFinite(numericScore)) return;
+
+        const list = recentScoreSamplesMap.get(normalized) || [];
+        list.push(numericScore);
+        recentScoreSamplesMap.set(normalized, list);
+      });
+
+      (entry.weakPhonemes || []).forEach((phoneme) => {
+        const normalized = normalizePhoneme(phoneme);
+        if (!normalized) return;
+        recentWeakCountMap.set(normalized, (recentWeakCountMap.get(normalized) || 0) + 1);
+      });
+    });
+
+    const details = PHONEMES_UK.map((phoneme) => {
       const candidates = [
-        normalizePhoneme(symbol),
-        ...(PHONEME_ALIASES[symbol] || []).map((alias) => normalizePhoneme(alias)),
+        normalizePhoneme(phoneme.p),
+        ...(PHONEME_ALIASES[phoneme.p] || []).map((alias) => normalizePhoneme(alias)),
       ];
 
       let minScore: number | undefined;
-      let hasWeak = false;
+      let weakCount = 0;
+      let recentWeakCount = 0;
+      const recentScores: number[] = [];
 
       candidates.forEach((candidate) => {
         const score = scoreMap.get(candidate);
         if (score !== undefined) {
           minScore = minScore === undefined ? score : Math.min(minScore, score);
         }
-        if (weakSet.has(candidate)) {
-          hasWeak = true;
-        }
+        weakCount += weakCountMap.get(candidate) || 0;
+        recentWeakCount += recentWeakCountMap.get(candidate) || 0;
+        const samples = recentScoreSamplesMap.get(candidate) || [];
+        recentScores.push(...samples);
       });
 
-      if (minScore !== undefined) return scoreToState(minScore);
-      if (hasWeak) return 'poor';
-      return 'none';
-    };
+      const recentAvgScore =
+        recentScores.length > 0
+          ? recentScores.reduce((sum, val) => sum + val, 0) / recentScores.length
+          : undefined;
+
+      let baseState: PhonemeState = 'none';
+      if (minScore !== undefined) {
+        baseState = scoreToState(minScore);
+      } else if (weakCount > 0) {
+        baseState = 'poor';
+      }
+
+      const recoveredRecently =
+        baseState === 'poor' &&
+        recentScores.length >= RECENT_MIN_SAMPLES_FOR_RECOVERY &&
+        recentWeakCount === 0 &&
+        (recentAvgScore ?? 0) >= RECENT_RECOVERY_SCORE;
+
+      if (recoveredRecently) {
+        // Recently stable performance: fade red to yellow-green.
+        baseState = 'good';
+      }
+
+      return {
+        symbol: phoneme.p,
+        baseState,
+        minScore,
+        weakCount,
+        recoveredRecently,
+      };
+    });
+
+    const issueCandidates = details
+      .filter((item) => item.baseState !== 'none' && item.baseState !== 'excellent')
+      .sort((a, b) => {
+        if (a.recoveredRecently !== b.recoveredRecently) {
+          return a.recoveredRecently ? 1 : -1;
+        }
+        if (b.weakCount !== a.weakCount) return b.weakCount - a.weakCount;
+        const aScore = a.minScore ?? 101;
+        const bScore = b.minScore ?? 101;
+        if (aScore !== bScore) return aScore - bScore;
+        return a.symbol.localeCompare(b.symbol);
+      });
+
+    const redTop = new Set(issueCandidates.slice(0, MAX_RED_PHONEMES).map((item) => item.symbol));
+    const yellowTop = new Set(
+      issueCandidates
+        .slice(MAX_RED_PHONEMES, MAX_RED_PHONEMES + MAX_YELLOW_PHONEMES)
+        .map((item) => item.symbol)
+    );
 
     const map = new Map<string, PhonemeState>();
-    PHONEMES_UK.forEach((phoneme) => {
-      map.set(phoneme.p, resolveState(phoneme.p));
+    details.forEach((item) => {
+      if (item.baseState === 'none' || item.baseState === 'excellent') {
+        map.set(item.symbol, item.baseState);
+        return;
+      }
+
+      if (redTop.has(item.symbol)) {
+        map.set(item.symbol, 'poor');
+        return;
+      }
+
+      if (yellowTop.has(item.symbol)) {
+        map.set(item.symbol, 'good');
+        return;
+      }
+
+      map.set(item.symbol, 'none');
     });
     return map;
   }, [historyEntries]);
@@ -421,7 +575,7 @@ export default function StatisticsPage() {
                 <PhonemeKey 
                   phoneme="/eɪ/" 
                   word="say" 
-                  state="good" 
+                  state={phonemeStates.get('/eɪ/') || 'none'} 
                   isSelected={selectedPhoneme === '/eɪ/'} 
                   onClick={() => setSelectedPhoneme('/eɪ/')} 
                 />
