@@ -9,17 +9,17 @@ const steps = [
   },
   {
     target: 'step-1',
-    title: '1. Select Assessment Mode',
+    title: 'Select Assessment Mode',
     content: 'Choose "Score given text" to read a specific prompt, or "Free reading score" to speak spontaneously about a topic.',
   },
   {
     target: 'step-2',
-    title: '2. Start Recording',
+    title: 'Start Recording',
     content: 'Click this button and start speaking. We use Wasm-powered audio processing to ensure high quality.',
   },
   {
     target: 'step-3',
-    title: '3. Review Results',
+    title: 'Review Results',
     content: 'After recording, you will see detailed pronunciation scores. You can also generate a deep AI analysis report!',
   },
 ];

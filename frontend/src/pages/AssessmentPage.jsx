@@ -215,7 +215,7 @@ const AssessmentPage = () => {
 
       setStatusText('Upload successful! Calling Azure scoring...');
       const currentUserId = getOrCreateUserId();
-      const isWithText = currentMode === 'with-text';
+      const isWithText = currentMode === 'with-text' || currentMode === 'tongue-twister';
       const scoreEndpoint = isWithText
         ? joinApiUrl(apiBaseUrl, 'score')
         : joinApiUrl(apiBaseUrl, config.scoreFreeApiPath);

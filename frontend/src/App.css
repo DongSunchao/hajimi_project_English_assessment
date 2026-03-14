@@ -106,6 +106,22 @@
   margin: 4px 0 0;
 }
 
+.tongue-twister-display {
+  margin-top: 15px;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-left: 4px solid #1890ff;
+  border-radius: 4px;
+}
+
+.twister-text {
+  margin: 0;
+  font-size: 16px;
+  font-style: italic;
+  color: #333;
+  line-height: 1.5;
+}
+
 .record-action {
   margin: 20px 0;
 }
