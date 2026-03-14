@@ -69,6 +69,16 @@
   border-radius: 20px;
   cursor: pointer;
   transition: background-color 0.2s ease, color 0.2s ease;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.mode-button:hover {
+  border-color: #40a9ff;
+  color: #40a9ff;
 }
 
 .mode-button.is-active {
@@ -134,6 +144,13 @@
   border: none;
   border-radius: 25px;
   cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: background-color 0.2s ease;
+}
+
+.record-button:hover {
+  background-color: #40a9ff;
 }
 
 .record-button.is-recording {
@@ -673,4 +690,76 @@
 /* Center step doesn't need arrow */
 .tutorial-content.step-by-step[style*="fixed"]::after {
   display: none;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.history-card {
+  background-color: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  padding: 15px;
+  text-align: left;
+  transition: box-shadow 0.2s ease;
+}
+
+.history-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.history-date {
+  font-size: 12px;
+  color: #888;
+}
+
+.history-score {
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.score-excellent { background-color: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+.score-good { background-color: #e6f7ff; color: #1890ff; border: 1px solid #91d5ff; }
+.score-average { background-color: #fff7e6; color: #fa8c16; border: 1px solid #ffd591; }
+.score-poor { background-color: #fff1f0; color: #f5222d; border: 1px solid #ffa39e; }
+
+.history-text {
+  margin: 0 0 10px 0;
+  font-style: italic;
+  color: #333;
+}
+
+.history-stats {
+  display: flex;
+  gap: 15px;
+  font-size: 13px;
+  color: #666;
+}
+
+.back-link {
+  text-decoration: none;
+  color: #1890ff;
+  font-weight: 600;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.loading-container {
+  padding: 40px;
+  color: #888;
 }

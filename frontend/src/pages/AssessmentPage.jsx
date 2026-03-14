@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import RecordRTC from 'recordrtc';
+import { Link } from 'react-router-dom';
 import config from '../config.json';
 import '../App.css';
 import { runWasmAudioProcessing, encodeWAV } from '../utils/wasmAudio';
@@ -363,14 +364,27 @@ const AssessmentPage = () => {
   return (
     <div className="app-shell" id="step-0">
       <header className="app-header">
-        <h2>English Pronunciation Assessment Demo</h2>
-        <button 
-          className="help-button" 
-          onClick={() => setIsTutorialOpen(true)}
-          title="Replay Tutorial"
-        >
-          ?
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <Link to="/" className="back-link" style={{ fontSize: '14px' }}>← Back</Link>
+          <h2>English Pronunciation Assessment Demo</h2>
+        </div>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <Link 
+            to="/history" 
+            className="help-button" 
+            title="View History"
+            style={{ textDecoration: 'none', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            📋
+          </Link>
+          <button 
+            className="help-button" 
+            onClick={() => setIsTutorialOpen(true)}
+            title="Replay Tutorial"
+          >
+            ?
+          </button>
+        </div>
       </header>
 
       {/* Mode selection and Assessment form */}
