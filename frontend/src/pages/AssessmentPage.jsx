@@ -9,6 +9,7 @@ import AiAdviceCard from '../components/AiAdviceCard';
 import RecordingPanel from '../components/RecordingPanel';
 import ScoreResultCard from '../components/ScoreResultCard';
 import AssessmentForm from '../components/AssessmentForm';
+import TutorialDialog from '../components/TutorialDialog';
 
 const AssessmentPage = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -28,6 +29,15 @@ const AssessmentPage = () => {
   const [currentS3FileName, setCurrentS3FileName] = useState(null);
   const [clonedAudio, setClonedAudio] = useState(null);
   const [, setIsVoiceLoading] = useState(false);
+  const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+
+  useEffect(() => {
+    const hasSeenTutorial = localStorage.getItem('has_seen_tutorial');
+    if (!hasSeenTutorial) {
+      setIsTutorialOpen(true);
+      localStorage.setItem('has_seen_tutorial', 'true');
+    }
+  }, []);
 
   const recorderRef = useRef(null);
   const timerRef = useRef(null);
@@ -351,20 +361,31 @@ const AssessmentPage = () => {
   };
 
   return (
-    <div className="app-shell">
-      <h2>English Pronunciation Assessment Demo</h2>
+    <div className="app-shell" id="step-0">
+      <header className="app-header">
+        <h2>English Pronunciation Assessment Demo</h2>
+        <button 
+          className="help-button" 
+          onClick={() => setIsTutorialOpen(true)}
+          title="Replay Tutorial"
+        >
+          ?
+        </button>
+      </header>
 
       {/* Mode selection and Assessment form */}
-      <AssessmentForm
-        assessmentMode={assessmentMode}
-        setAssessmentMode={setAssessmentMode}
-        topicText={topicText}
-        setTopicText={setTopicText}
-        inputText={inputText}
-        setInputText={setInputText}
-      />
+      <div id="step-1">
+        <AssessmentForm
+          assessmentMode={assessmentMode}
+          setAssessmentMode={setAssessmentMode}
+          topicText={topicText}
+          setTopicText={setTopicText}
+          inputText={inputText}
+          setInputText={setInputText}
+        />
+      </div>
 
-      <div className="record-action">
+      <div className="record-action" id="step-2">
         <button
           onClick={isRecording ? stopRecording : startRecording}
           className={`record-button ${isRecording ? 'is-recording' : ''}`}
@@ -386,18 +407,25 @@ const AssessmentPage = () => {
       )}
 
       {scoreResult && (
-        <ScoreResultCard
-          wasmStats={wasmStats}
-          quickTip={quickTip}
-          recognizedText={recognizedText}
-          scoreResult={scoreResult}
-          aiLoading={aiLoading}
-          onCallAiTutor={callAiTutor}
-        />
+        <div id="step-3">
+          <ScoreResultCard
+            wasmStats={wasmStats}
+            quickTip={quickTip}
+            recognizedText={recognizedText}
+            scoreResult={scoreResult}
+            aiLoading={aiLoading}
+            onCallAiTutor={callAiTutor}
+          />
+        </div>
       )}
 
       {aiAdvice && <AiAdviceCard aiAdvice={aiAdvice} />}
       {clonedAudio && (<audio controls src={clonedAudio} autoPlay /> )}
+      
+      <TutorialDialog 
+        isOpen={isTutorialOpen} 
+        onClose={() => setIsTutorialOpen(false)} 
+      />
     </div>
   );
 };
