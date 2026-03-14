@@ -46,3 +46,6 @@ Pronunciation data is stored in a sparse map format to reduce DynamoDB write cos
 | `score` | Number | Overall pronunciation accuracy score from 0 to 100 |
 | `phonemeScores` | Map | Example: `{ "th": 65, "r": 82 }`, storing the weakest phoneme scores in the session |
 
+
+## our architecture of the app
+![Architecture](frontend/public/architecture%20of%20the%20app.png)
