@@ -220,9 +220,28 @@ const AssessmentPage = () => {
       const scoreEndpoint = isWithText
         ? joinApiUrl(apiBaseUrl, 'score')
         : joinApiUrl(apiBaseUrl, config.scoreFreeApiPath);
+      
+      let finalTopic = 'General Practice';
+      if (currentMode === 'free') {
+        finalTopic = currentTopic ? `Free Talk: ${currentTopic}` : 'Free Talk';
+      } else if (currentMode === 'tongue-twister') {
+        finalTopic = 'Tongue Twister';
+      } else if (currentMode === 'with-text') {
+        finalTopic = 'Reading Practice';
+      }
+
       const scorePayload = isWithText
-        ? { fileName: file_name, referenceText: inputTextRef.current, userId: currentUserId }
-        : { fileName: file_name, userId: currentUserId, topicText: currentTopic };
+        ? { 
+            fileName: file_name, 
+            referenceText: inputTextRef.current, 
+            userId: currentUserId,
+            topic: finalTopic
+          }
+        : { 
+            fileName: file_name, 
+            userId: currentUserId, 
+            topic: finalTopic
+          };
 
       const scoreRes = await fetch(scoreEndpoint, {
         method: 'POST',

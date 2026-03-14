@@ -2,16 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchHistoryByUuid } from '../utils/historyApi';
 import '../App.css';
+import { getOrCreateUserId } from '../utils/useId';
 
 const HistoryPage = () => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const userId = getOrCreateUserId();
 
   useEffect(() => {
     const getHistory = async () => {
       try {
-        // Using a fake UUID for now
-        const data = await fetchHistoryByUuid('fake-uuid-123');
+        // Using the user's UUID by calling getOrCreateUserId() to fetch their specific history records from DynamoDB
+        const data = await fetchHistoryByUuid(userId);
         setHistory(data);
       } catch (error) {
         console.error("Failed to fetch history:", error);
@@ -48,7 +50,23 @@ const HistoryPage = () => {
                   </span>
                 </div>
                 <div className="history-body">
-                  <p className="history-text">"{item.text}"</p>
+                  <div className="history-topic" style={{ 
+                    fontSize: '0.85rem', 
+                    color: '#0056b3', 
+                    backgroundColor: '#e6f2ff', 
+                    display: 'inline-block', 
+                    padding: '2px 8px', 
+                    borderRadius: '12px',
+                    marginBottom: '8px',
+                    fontWeight: '600'
+                  }}>
+                    🏷️ {item.topic || 'General Practice'}
+                  </div>
+                  
+                  <p className="history-text" style={{ marginTop: '0', fontStyle: 'italic', color: '#444' }}>
+                    "{item.text}"
+                  </p>
+                  
                   <div className="history-stats">
                     <span>Fluency: {item.fluency}%</span>
                     <span>Pronunciation: {item.pronunciation}%</span>

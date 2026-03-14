@@ -1,44 +1,50 @@
-// Fake API to fetch assessment history by UUID
-export const fetchHistoryByUuid = async (uuid) => {
-  // Simulate API call delay
-  await new Promise((resolve) => setTimeout(resolve, 800));
+import { apiBaseUrl } from '../config.json';
 
-  // Mock data for the given UUID
-  // In a real scenario, this would call an endpoint like `/history/${uuid}`
-  const mockHistory = [
-    {
-      id: '1',
-      date: '2026-03-14 10:30',
-      text: 'The quick brown fox jumps over the lazy dog.',
-      score: 85,
-      fluency: 80,
-      pronunciation: 90,
-    },
-    {
-      id: '2',
-      date: '2026-03-13 14:15',
-      text: 'To be or not to be, that is the question.',
-      score: 72,
-      fluency: 65,
-      pronunciation: 78,
-    },
-    {
-      id: '3',
-      date: '2026-03-12 09:45',
-      text: 'She sells seashells by the seashore.',
-      score: 92,
-      fluency: 95,
-      pronunciation: 90,
-    },
-    {
-      id: '4',
-      date: '2026-03-11 16:20',
-      text: 'Peter Piper picked a peck of pickled peppers.',
-      score: 68,
-      fluency: 60,
-      pronunciation: 75,
-    },
-  ];
+export const fetchHistoryByUuid = async (userId) => {
+  try {
+    const response = await fetch(`${apiBaseUrl}/history`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId: userId }) 
+    });
 
-  return mockHistory;
+    if (!response.ok) {
+      throw new Error(`History API error, status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const dbItems = data.history || [];
+
+    const mappedHistory = dbItems.map((item) => {
+      const dateObj = new Date(item.timestamp * 1000);
+      
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      const hours = String(dateObj.getHours()).padStart(2, '0');
+      const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}`;
+
+      return {
+        id: item.timestamp.toString(),
+        date: formattedDate,
+        text: item.referenceText || item.recognizedText || 'No text recorded',
+        topic : item.topic || 'General',
+        score: item.score || 0,
+        fluency: item.score || 0,                
+        pronunciation: item.score || 0,
+        
+        weakPhonemes: item.weakPhonemes || []    
+      };
+    });
+
+    console.log("please check the history data:", mappedHistory);
+    return mappedHistory;
+
+  } catch (error) {
+    console.error("❌ failed to fetch history:", error);
+    return []; 
+  }
 };
