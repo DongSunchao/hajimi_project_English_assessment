@@ -523,8 +523,8 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .tutorial-content h3 {
@@ -581,7 +581,6 @@
 }
 
 .tutorial-content.step-by-step {
-  position: absolute;
   width: 320px;
   padding: 20px;
 }

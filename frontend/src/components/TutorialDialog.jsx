@@ -26,11 +26,28 @@ const steps = [
 
 const TutorialDialog = ({ isOpen, onClose }) => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [style, setStyle] = useState({});
+  const [style, setStyle] = useState({
+    position: 'fixed',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    zIndex: 1001,
+    visibility: 'visible',
+    opacity: 1
+  });
 
   useEffect(() => {
     if (isOpen) {
       setCurrentStep(0);
+      setStyle({
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        zIndex: 1001,
+        visibility: 'visible',
+        opacity: 1
+      });
     }
   }, [isOpen]);
 
@@ -53,7 +70,9 @@ const TutorialDialog = ({ isOpen, onClose }) => {
              top: '50%',
              left: '50%',
              transform: 'translate(-50%, -50%)',
-             zIndex: 1001
+             zIndex: 1001,
+             visibility: 'visible',
+             opacity: 1
            });
         } else {
            // Position below or above the element
@@ -65,7 +84,9 @@ const TutorialDialog = ({ isOpen, onClose }) => {
              top: `${top}px`,
              left: `${left}px`,
              transform: 'translateX(-50%)',
-             zIndex: 1001
+             zIndex: 1001,
+             visibility: 'visible',
+             opacity: 1
            });
         }
 
@@ -76,7 +97,7 @@ const TutorialDialog = ({ isOpen, onClose }) => {
       }
     };
 
-    const timer = setTimeout(updatePosition, 150);
+    const timer = setTimeout(updatePosition, currentStep === 0 ? 0 : 150);
     window.addEventListener('resize', updatePosition);
     
     return () => {
@@ -93,6 +114,15 @@ const TutorialDialog = ({ isOpen, onClose }) => {
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
+      if (currentStep === 0) {
+        // Prepare style for next step to avoid jumping
+        setStyle({
+           position: 'absolute',
+           zIndex: 1001,
+           visibility: 'hidden',
+           opacity: 0
+        });
+      }
       setCurrentStep(currentStep + 1);
     } else {
       onClose();
@@ -101,6 +131,18 @@ const TutorialDialog = ({ isOpen, onClose }) => {
 
   const handleBack = () => {
     if (currentStep > 0) {
+      if (currentStep === 1) {
+         // Return to centered fixed position for step 0
+         setStyle({
+           position: 'fixed',
+           top: '50%',
+           left: '50%',
+           transform: 'translate(-50%, -50%)',
+           zIndex: 1001,
+           visibility: 'visible',
+           opacity: 1
+         });
+      }
       setCurrentStep(currentStep - 1);
     }
   };
