@@ -191,7 +191,7 @@ const AssessmentPage = () => {
   };
 
   const uploadToS3AndScore = async (audioBlob, currentMode, currentTopic) => {
-    const apiBaseUrl = config.apiBaseUrl;
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
     setStatusText('Getting S3 upload credentials...');
 
     try {
@@ -293,7 +293,7 @@ const AssessmentPage = () => {
   };
 
   const requestAiTutor = async ({ userId, recognizedText, mode }) => {
-    const res = await fetch(joinApiUrl(config.apiBaseUrl, 'ai-tutor'), {
+    const res = await fetch(joinApiUrl(import.meta.env.VITE_API_BASE_URL, 'ai-tutor'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, recognizedText, mode }),
@@ -345,7 +345,7 @@ const AssessmentPage = () => {
     // ==========================================
     // Parallel task B: call genVoice to obtain cloned recording (concurrent)
     // ==========================================
-    fetch(joinApiUrl(config.apiBaseUrl, 'gen-voice'), {
+    fetch(joinApiUrl(import.meta.env.VITE_API_BASE_URL, 'gen-voice'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
