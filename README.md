@@ -103,6 +103,10 @@ Copy-Item audio_engine.js, audio_engine.wasm ..\..\frontend\public\wasm\
 
 This project is still in active development. The following features are not yet fully implemented:
 
+### Outdated frontend/
+- we have upgraded the frontend to the frontend2 dir but keep
+the old frontend dir for reference. The old frontend is not fully functional and may contain outdated code.
+
 ### Global Navigation Bar
 - "Messages" and "User" modules are incomplete
 - Profile and Logout options are visible but not yet functional
