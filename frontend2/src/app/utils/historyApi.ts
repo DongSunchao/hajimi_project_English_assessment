@@ -38,6 +38,37 @@ const isDevelopmentMode = () => {
   return !config.api.baseUrl || config.api.baseUrl.includes('localhost');
 };
 
+const normalizeText = (value: unknown): string => String(value || '').trim();
+
+const pickBestRecognizedText = (item: any): string => {
+  const candidates = [
+    item.recognizedText,
+    item.RecognizedText,
+    item.displayText,
+    item.DisplayText,
+    item.transcript,
+    item.Transcript,
+    item.text,
+    item.Text,
+  ]
+    .map(normalizeText)
+    .filter(Boolean);
+
+  return candidates[0] || '';
+};
+
+const isTopicLikeReference = (referenceText: string, topic: string): boolean => {
+  const normalizedReference = referenceText.toLowerCase();
+  const normalizedTopic = topic.toLowerCase();
+
+  if (!normalizedReference) return false;
+  if (normalizedReference === normalizedTopic) return true;
+  if (normalizedReference.startsWith('topic:')) return true;
+  if (normalizedReference.startsWith('free talk:')) return true;
+
+  return !!normalizedTopic && normalizedReference.includes(normalizedTopic);
+};
+
 /**
  * Fetches assessment history from the backend
  * Falls back to mock data if backend is unavailable
@@ -74,6 +105,15 @@ export async function fetchHistory(): Promise<HistoryEntry[]> {
         ? new Date(timestampNumber * 1000).toISOString()
         : new Date(rawTs).toISOString();
 
+      const topic = normalizeText(item.topic || 'General');
+      const rawReferenceText = normalizeText(item.referenceText);
+      const recognizedText = pickBestRecognizedText(item);
+      const referenceLooksLikeTopic = isTopicLikeReference(rawReferenceText, topic);
+
+      const referenceText = rawReferenceText
+        ? (referenceLooksLikeTopic && recognizedText ? recognizedText : rawReferenceText)
+        : recognizedText || 'No text recorded';
+
       const overallScore = Number(item.score || 0);
       const fluency = item.fluencyScore !== undefined ? Number(item.fluencyScore) : overallScore;
       const accuracy = item.accuracyScore !== undefined ? Number(item.accuracyScore) : overallScore;
@@ -82,8 +122,8 @@ export async function fetchHistory(): Promise<HistoryEntry[]> {
       return {
         id: String(rawTs ?? crypto.randomUUID()),
         timestamp,
-        referenceText: item.referenceText || item.recognizedText || 'No text recorded',
-        topic: item.topic || 'General',
+        referenceText,
+        topic,
         overallScore,
         pronunciation: accuracy,
         accuracy,

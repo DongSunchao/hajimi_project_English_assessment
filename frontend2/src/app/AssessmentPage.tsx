@@ -542,18 +542,25 @@ return (
 
         {/* WASM Stats */}
         {wasmStats && (
-          <div className="retro-paper border-2 border-[#3a3a3a] rounded p-4 retro-shadow">
-            <div className="flex items-center gap-3 text-xs text-[#4a4a4a] font-['Share_Tech_Mono',monospace]">
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 rounded-full bg-[#5fc77f]" />
-                <span>{wasmStats.engine === 'wasm' ? 'WASM PROCESSING COMPLETE' : 'JS FALLBACK PROCESSING'}</span>
+          <div className="crt-screen border-4 border-[#3a3a3a] rounded p-4 retro-shadow bg-[#0a0a0a] relative overflow-hidden">
+            <div className="flex items-center justify-between font-['Share_Tech_Mono',monospace]">
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 rounded-full bg-[#00ff41] animate-pulse shadow-[0_0_8px_#00ff41]" />
+                <div>
+                  <div className="text-[#00ff41] text-sm font-bold tracking-wider">
+                    {wasmStats.engine === 'wasm' ? '> EDGE_COMPUTING: WASM MODULE ACTIVE' : '> EDGE_COMPUTING: JS FALLBACK'}
+                  </div>
+                  <div className="text-[#00ff41]/70 text-xs mt-1">
+                    [AUDIO_PAYLOAD_OPTIMIZATION_PROTOCOL_INITIATED]
+                  </div>
+                </div>
               </div>
-              <span>•</span>
-              <span>FROM: {wasmStats.originalSampleRate}Hz</span>
-              <span>•</span>
-              <span>TO: {wasmStats.targetSampleRate}Hz</span>
-              <span>•</span>
-              <span className="text-[#5fc77f] font-bold">SAVED: {wasmStats.savedPercentage}%</span>
+              <div className="text-right border-l-2 border-[#00ff41]/30 pl-4">
+                <div className="text-[#00ff41]/80 text-xs">RESAMPLED: {wasmStats.originalSampleRate}Hz → {wasmStats.targetSampleRate}Hz</div>
+                <div className="text-[#ffb700] font-bold text-sm mt-1 shadow-[0_0_5px_#ffb700]/50">
+                  BANDWIDTH SAVED: {wasmStats.savedPercentage}%
+                </div>
+              </div>
             </div>
           </div>
         )}

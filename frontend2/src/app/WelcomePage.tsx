@@ -25,7 +25,6 @@ const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 return (
     <div className="relative min-h-screen retro-beige-bg text-[#2a2a2a] font-['Share_Tech_Mono',monospace] overflow-hidden">
       
-      {/* 1. 这里是原有的背景图片，保持不变 */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-10">
         <ImageWithFallback 
           src="https://images.unsplash.com/photo-1765734482991-7c60829a0bff?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aW50YWdlJTIwb2ZmaWNlJTIwZGVzayUyMDE5ODBzfGVufDF8fHx8MTc3MzQ4MDQzNXww&ixlib=rb-4.1.0&q=80&w=1080"
@@ -34,7 +33,6 @@ return (
         />
       </div>
 
-      {/* 👇 2. 插入全新的统一 Header (原本这里什么都没有) */}
       <div className="relative z-20">
         <header className="bg-gradient-to-b from-[#8a7a5f] to-[#6a5a4f] border-b-4 border-[#3a3a3a] py-3 px-8 retro-shadow">
           <div className="flex items-center justify-between gap-8 max-w-[1440px] mx-auto">
@@ -54,7 +52,6 @@ return (
               </div>
             </div>
 
-            {/* 新的顶部导航栏 */}
             <div className="flex-1 overflow-x-auto max-w-[500px]" style={{ overflowX: 'scroll',scrollbarWidth: 'thin', scrollbarColor: '#6a5a4f #4a4a3a' }}>
               <div className="flex items-center gap-2 pb-1">
                 <RetroNavButton label="Welcome" active />
@@ -64,7 +61,6 @@ return (
               </div>
             </div>
 
-            {/* 用户菜单 */}
             <div className="flex items-center gap-3 relative">
               <div className="retro-key bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] border-2 border-[#3a3a3a] rounded p-2 relative">
                 <Bell className="w-5 h-5" />
@@ -97,12 +93,9 @@ return (
           </div>
         </header>
       </div>
-      {/* 👆 Header 结束 */}
 
-      {/* 3. 修改 Main Container 的上边距，防止被顶部 Header 挡住 */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-100px)] p-4">
         
-        {/* 巨大的 Logo 和标题 (保持不变) */}
         <div className="mb-8 text-center">
           <div className="w-24 h-24 mx-auto mb-4 border-4 border-[#3a3a3a] rounded-full bg-gradient-to-b from-[#f5f3e8] to-[#d4cbb8] flex items-center justify-center retro-shadow">
             <span className="text-[#3a3a3a] font-bold text-5xl">R</span>
@@ -111,12 +104,18 @@ return (
           <p className="text-[#6a6a6a] tracking-widest">IT Department - Employee Assessment Portal</p>
         </div>
 
-        {/* Welcome Message - CRT Style */}
         <div className="crt-screen border-8 border-[#4a4a3a] rounded-lg p-8 max-w-2xl mb-8 retro-shadow">
           <div className="relative z-20">
             <p className="crt-text text-center text-lg leading-relaxed mb-4">
               &gt; WELCOME TO SPEECH PRACTICE SYSTEM v2.0
             </p>
+            <div className="bg-[#002200] border border-[#00ff41]/30 p-4 mb-4">
+              <p className="crt-text text-left text-sm leading-relaxed opacity-90 text-[#00ff41]">
+                <span className="text-[#ffb700]">MISSION OBJECTIVE:</span> Break the "Bamboo Ceiling" in local AU workplaces.
+                <br/><br/>
+                Analyzing phoneme-level weaknesses. Generating dynamic AI tongue-twisters. Synthesizing voice clones.
+              </p>
+            </div>
             <p className="crt-text text-center text-sm leading-relaxed opacity-80">
               "Have you tried turning it off and on again?"
             </p>
@@ -126,7 +125,6 @@ return (
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex flex-col md:flex-row gap-6 mb-8 w-full max-w-2xl">
           <button 
             onClick={() => navigate('/practice')}
