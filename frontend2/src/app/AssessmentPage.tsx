@@ -30,6 +30,32 @@ import { ImageWithFallback } from './components/figma/ImageWithFallback';
 
 type AssessmentMode = 'custom' | 'tongue-twister' | 'free';
 
+function TerminalLoader() {
+  const [text, setText] = useState('> INITIALIZING NEURAL LINK...\n');
+  useEffect(() => {
+    const logs = [
+      '> BYPASSING MAINFRAME...',
+      '> UPLOADING WASM OPTIMIZED PAYLOAD TO AWS S3...',
+      '> INITIATING AZURE PHONEME EXTRACTION PROTOCOL...',
+      '> CROSS-REFERENCING ARPAbet MATRICES...',
+      '> AWAITING FINAL SCORE...'
+    ];
+    let i = 0;
+    const timer = setInterval(() => {
+      if (i < logs.length) {
+        setText(prev => prev + logs[i] + '\n');
+        i++;
+      }
+    }, 800);
+    return () => clearInterval(timer);
+  }, []);
+  return (
+    <div className="bg-[#0a0a0a] border-2 border-[#00ff41]/50 p-4 rounded retro-shadow font-mono text-[#00ff41] text-xs h-32 overflow-hidden flex flex-col justify-end mt-4 w-full">
+      <pre className="whitespace-pre-wrap">{text}<span className="animate-pulse">_</span></pre>
+    </div>
+  );
+}
+
 const getErrorMessage = (error: unknown): string => {
   return error instanceof Error ? error.message : 'Unknown error';
 };
@@ -570,13 +596,17 @@ return (
           <div className="retro-paper border-4 border-[#3a3a3a] rounded-lg p-6 retro-shadow">
             <label className="block text-sm font-bold text-[#2a2a2a] mb-3">YOUR RECORDING:</label>
             <audio controls src={audioUrl} className="w-full" />
-            <button
-              onClick={submitForScoring}
-              disabled={isLoadingScore}
-              className="retro-key mt-4 w-full bg-gradient-to-b from-[#f0e68c] to-[#dac86a] border-3 border-[#6b5f3a] text-[#2a2a2a] font-bold py-4 px-6 rounded-lg text-base hover:scale-105 transition-transform disabled:opacity-50"
-            >
-              {isLoadingScore ? 'ANALYZING...' : '📊 GET SCORE'}
-            </button>
+            {isLoadingScore ? (
+              <TerminalLoader />
+            ) : (
+              <button
+                onClick={submitForScoring}
+                disabled={isLoadingScore}
+                className="retro-key mt-4 w-full bg-gradient-to-b from-[#f0e68c] to-[#dac86a] border-3 border-[#6b5f3a] text-[#2a2a2a] font-bold py-4 px-6 rounded-lg text-base hover:scale-105 transition-transform"
+              >
+                📊 GET SCORE
+              </button>
+            )}
           </div>
         )}
 

@@ -5,7 +5,7 @@
  * Inspired by 80s office computers and IT Crowd aesthetic.
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 export interface AiAdvice {
   greeting: string;
@@ -17,6 +17,26 @@ export interface AiAdvice {
 
 interface AiAdviceCardProps {
   advice: AiAdvice;
+}
+
+function TypewriterText({ text }: { text: string }) {
+  const [displayedText, setDisplayedText] = useState('');
+  
+  useEffect(() => {
+    setDisplayedText('');
+    let i = 0;
+    const timer = setInterval(() => {
+      if (i < text.length) {
+        setDisplayedText(prev => prev + text.charAt(i));
+        i++;
+      } else {
+        clearInterval(timer);
+      }
+    }, 20);
+    return () => clearInterval(timer);
+  }, [text]);
+
+  return <span>{displayedText}<span className="animate-pulse bg-[#00ff41] text-[#003300] ml-1">█</span></span>;
 }
 
 export function AiAdviceCard({ advice }: AiAdviceCardProps) {
@@ -47,8 +67,8 @@ export function AiAdviceCard({ advice }: AiAdviceCardProps) {
           </div>
           <div className="flex-1">
             <div className="bg-[#003300]/50 border-2 border-[#00ff41]/30 rounded-lg p-3 retro-key">
-              <p className="crt-text text-sm leading-relaxed">
-                {advice.greeting}
+              <p className="crt-text text-sm leading-relaxed min-h-[60px]">
+                <TypewriterText text={advice.greeting} />
               </p>
             </div>
           </div>
