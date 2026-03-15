@@ -1,7 +1,5 @@
 # Hajimi English: AI-Powered Pronunciation Tutor
 
-GitHub README English Version
-
 Hajimi English is an intelligent pronunciation analysis and voice cloning platform built on a high-performance, serverless, multi-cloud architecture. It does more than score spoken English: it identifies phonetic patterns, tracks persistent weaknesses, and generates personalized feedback.
 
 our app has deployed on AWS cloudfront:https://d32exl1srs8962.cloudfront.net/
@@ -52,9 +50,9 @@ QR:
 - ElevenLabs API — Voice Cloning & Neural TTS
 
 
-## how to compile the cpp optimizer:
+# How to compile the cpp optimizer:
 
-# PowerShell (backtick line break) or write directly on one line:
+## PowerShell (backtick line break) or write directly on one line:
 ```powershell
 emcc audio_engine.cpp -o audio_engine.js `
   -O3 `
