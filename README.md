@@ -1,12 +1,10 @@
 # Hajimi English: AI-Powered Pronunciation Tutor
 
-GitHub README English Version
-
 Hajimi English is an intelligent pronunciation analysis and voice cloning platform built on a high-performance, serverless, multi-cloud architecture. It does more than score spoken English: it identifies phonetic patterns, tracks persistent weaknesses, and generates personalized feedback.
 
-our app has deployed on AWS cloudfront:https://d32exl1srs8962.cloudfront.net/
+**Live Demo:** https://d32exl1srs8962.cloudfront.net/
 
-QR:
+**QR Code:**
 
 ![CloudFront QR](frontend/public/qrcode_d32exl1srs8962.cloudfront.net.png)
 
@@ -52,9 +50,7 @@ QR:
 - ElevenLabs API — Voice Cloning & Neural TTS
 
 
-# how to compile the cpp optimizer:
-
-## PowerShell (backtick line break) or write directly on one line:
+## How to Compile the C++ Optimizer
 ```powershell
 emcc audio_engine.cpp -o audio_engine.js `
   -O3 `
@@ -68,5 +64,57 @@ emcc audio_engine.cpp -o audio_engine.js `
 Copy-Item audio_engine.js, audio_engine.wasm ..\..\frontend\public\wasm\
 ```
 
-## our architecture of the app
+## Application Architecture
 ![Architecture](frontend/public/architecture%20of%20the%20app.png)
+
+---
+
+## Core Features Implemented
+
+### 🎯 1. Precise Speech Assessment
+- Frontend captures recorded audio and sends it to the backend (integrated with Azure Speech Service API)
+- Multi-dimensional scoring including fluency and completeness
+- Displays detailed scores for specific words and phonemes on the frontend
+
+### 🤖 2. AI Tutor Feedback
+- Leverages Google Gemini LLM to analyze user pronunciation scores
+- Provides personalized, actionable recommendations for improving spoken English
+
+### 🎙️ 3. Personalized Voice Cloning & Text-to-Speech
+- System integrates both standard Edge-TTS pronunciation and custom voice cloning
+- **Cloud-based voice extraction:** Analyzes user's voice characteristics and uses the user's own voice to read auto-generated practice sentences
+- Delivers an immersive, personalized shadowing and comparison experience
+
+### 📊 4. Interactive Phonetic Statistics Dashboard
+- **Dynamic Vowel/Consonant Grid:** Accurately categorized phoneme grid that dynamically changes color (Excellent/Good/Poor) based on user's historical practice data
+- **Retro Data Panel:** Comprehensive IPA charts (UK IPA, US IPA) and ARPAbet notation with pronunciation letter highlights
+
+### ⚡ 5. High-Performance Audio Engine
+- WebAssembly (WASM) module compiled from C++
+- Enables low-latency, high-performance in-browser audio recording and processing
+
+### ☁️ 6. Cloud Storage & Practice History
+- Secure and efficient access to user recordings using AWS S3 Presigned URLs
+- History page displays past practice sessions with timestamps, text content, and overall scores
+
+---
+
+## Known Issues & Incomplete Features
+
+This project is still in active development. The following features are not yet fully implemented:
+
+### Global Navigation Bar
+- "Messages" and "User" modules are incomplete
+- Profile and Logout options are visible but not yet functional
+
+### Practice Page
+- Recording duration is not displayed dynamically after starting a recording
+
+### Statistics Page
+- Analysis Report section (center CRT monitor) is not yet implemented
+- US IPA and UK IPA switching functionality is not yet implemented
+- Auto-generating two practice sentences at the bottom is not yet implemented
+- All statistics on the page are currently fixed to "past three months" data; time range switching is not yet implemented
+
+### History Page
+- Clicking individual history records to view detailed assessment content and scores is not yet supported
