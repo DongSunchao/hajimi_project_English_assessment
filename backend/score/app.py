@@ -19,8 +19,8 @@ def lambda_handler(event, context):
 
         reference_text = body.get('referenceText')
 
-        topic_text = body.get('topicText')
-        effective_reference_text = reference_text if reference_text else f"Topic: {topic_text}"
+        topic = body.get('topic', 'General Practice')
+
         if not file_name or not user_id:
             return build_response(400, {"error": "Missing fileName or userId parameters"})
         
@@ -40,7 +40,8 @@ def lambda_handler(event, context):
             "GradingSystem": "HundredMark",
             "Granularity": "Phoneme",
             "Dimension": "Comprehensive",
-            "Format": "Detailed"
+            "Format": "Detailed",
+            "PhonemeAlphabet": "SAPI"
         })
 
         pronAssessmentHeader = base64.b64encode(pronAssessmentParamsJson.encode('utf-8')).decode('utf-8')
@@ -66,8 +67,9 @@ def lambda_handler(event, context):
             # Data cleaning and writing to DynamoDB
             # ==========================================
             try:
-                # Extract core data
-                nbest = result_json.get('NBest', [{}])[0]
+
+                nbest_list = result_json.get('NBest') or []
+                nbest = nbest_list[0] if len(nbest_list) > 0 else {}
                 recognized_text = (
                     result_json.get('DisplayText')
                     or nbest.get('Display')
@@ -75,7 +77,12 @@ def lambda_handler(event, context):
                     or ''
                 )
 
+
                 pron_score = nbest.get('PronScore', 0)
+                accuracy_score = nbest.get('AccuracyScore', 0)
+                fluency_score = nbest.get('FluencyScore', 0)
+                completeness_score = nbest.get('CompletenessScore', 0)
+
                 words_data = nbest.get('Words', [])
 
                 weak_words = []
@@ -83,14 +90,21 @@ def lambda_handler(event, context):
                 phoneme_scores_map = {} 
 
                 for word_obj in words_data:
+
                     word_score = word_obj.get('AccuracyScore', 100)
                     if word_score < 80:
                         weak_words.append(word_obj.get('Word', ''))
 
                     for phoneme_obj in word_obj.get('Phonemes', []):
+
                         p = phoneme_obj.get('Phoneme', '')
                         p_score = phoneme_obj.get('AccuracyScore', 100)
                         
+
+                        if not p:
+                            continue
+                            
+
                         if p_score < 80:
                             weak_phonemes.add(p)
 
@@ -99,23 +113,30 @@ def lambda_handler(event, context):
                         else:
                             phoneme_scores_map[p] = int(p_score)
 
+                topic_text = body.get('topic') or body.get('topicText') or 'General'
+
+                # 写入 DynamoDB
                 table = dynamodb.Table(table_name)
                 table.put_item(
                     Item={
                         'userId': user_id,
                         'timestamp': int(time.time()),
                         'score': int(pron_score),
-                        'referenceText': effective_reference_text,
+                        'accuracyScore': int(accuracy_score),
+                        'fluencyScore': int(fluency_score),
+                        'completenessScore': int(completeness_score),
+                        'referenceText': reference_text or f"Topic: {topic_text}",
                         'recognizedText': recognized_text,
+                        'topic': topic_text,
                         'weakWords': weak_words,
                         'weakPhonemes': list(weak_phonemes), 
                         'phonemeScores': phoneme_scores_map 
                     }
                 )
-                print(f"Check mark History record successfully written to DynamoDB, weak phonemes: {list(set(weak_phonemes))}")
+                print(f"✅ History record successfully written to DynamoDB, weak phonemes: {list(set(weak_phonemes))}")
 
             except Exception as db_error:
-                print(f"Warning sign Writing to DynamoDB failed: {str(db_error)}")
+                print(f"❌ Writing to DynamoDB failed: {str(db_error)}")
 
             # ==========================================
             # Rocket Perfect backward compatibility! Repackage detailed score into simple format to prevent frontend blank screen
