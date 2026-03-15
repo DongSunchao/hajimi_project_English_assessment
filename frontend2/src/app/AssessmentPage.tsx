@@ -1,6 +1,6 @@
 /**
  * AssessmentPage Component
- * 
+ *
  * Main page for voice recording and pronunciation assessment.
  * Features:
  * - Voice recording with waveform visualization
@@ -22,7 +22,6 @@ import { ScoreResultCard } from './components/ScoreResultCard';
 import { AiAdviceCard, type AiAdvice } from './components/AiAdviceCard';
 import { AssessmentForm } from './components/AssessmentForm';
 import { DevModeIndicator } from './components/DevModeIndicator';
-// 在文件顶部的 imports 中追加：
 import { Bell, LogOut } from 'lucide-react';
 import { clsx } from 'clsx';
 import svgPaths from "../imports/svg-ubr093inv5";
@@ -70,7 +69,7 @@ const normalizeAudioDataUri = (audio: string): string => {
 
 export default function AssessmentPage() {
   const navigate = useNavigate();
-  
+
   // console.error('Rendering AssessmentPage');
   // State management
   const [mode, setMode] = useState<AssessmentMode>('tongue-twister');
@@ -91,7 +90,6 @@ export default function AssessmentPage() {
   const [wasmStats, setWasmStats] = useState<any>(null);
   const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
   const [permissionError, setPermissionError] = useState<string | null>(null);
-// 在 AssessmentPage 内部其他 useState 下方追加：
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   // Refs
@@ -120,7 +118,7 @@ export default function AssessmentPage() {
   // Start recording
   const startRecording = async () => {
     setPermissionError(null);
-    
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setAudioStream(stream);
@@ -155,7 +153,7 @@ export default function AssessmentPage() {
       console.error('Error starting recording:', error);
       const errorMessage = getErrorMessage(error);
       const errorName = error instanceof Error ? error.name : '';
-      
+
       // Provide specific error messages
       if (errorName === 'NotAllowedError') {
         setPermissionError(
@@ -184,7 +182,7 @@ export default function AssessmentPage() {
     recorderRef.current.stopRecording(() => {
       const blob = recorderRef.current!.getBlob();
       processAudioWithWasm(blob);
-      
+
       // Clean up
       if (audioStream) {
         audioStream.getTracks().forEach(track => track.stop());
@@ -195,11 +193,11 @@ export default function AssessmentPage() {
   };
 
   const getOrCreateUserId = (): string => {
-  const key = 'app_user_id'; 
+  const key = 'app_user_id';
   const existing = localStorage.getItem(key);
   if (existing) return existing;
 
-  const generated = crypto.randomUUID(); 
+  const generated = crypto.randomUUID();
   localStorage.setItem(key, generated);
   return generated;
 };
@@ -439,19 +437,18 @@ export default function AssessmentPage() {
   };
 
 return (
-    // 确保外层有 relative 和 overflow-hidden
     <div className="relative min-h-screen retro-beige-bg text-[#2a2a2a] font-['Share_Tech_Mono',monospace] overflow-hidden">
-      
-      {/* 统一的背景纹理 */}
+
+      {/* Background texture */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-10">
-        <ImageWithFallback 
+        <ImageWithFallback
           src="https://images.unsplash.com/photo-1765734482991-7c60829a0bff?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aW50YWdlJTIwb2ZmaWNlJTIwZGVzayUyMDE5ODBzfGVufDF8fHx8MTc3MzQ4MDQzNXww&ixlib=rb-4.1.0&q=80&w=1080"
           alt="Office texture"
           className="absolute w-full h-full object-cover"
         />
       </div>
 
-      {/* 使用 relative z-10 确保内容在背景之上 */}
+      {/* Content layer */}
       <div className="relative z-10">
         <header className="bg-gradient-to-b from-[#8a7a5f] to-[#6a5a4f] border-b-4 border-[#3a3a3a] py-3 px-8 retro-shadow">
         <div className="flex items-center justify-between gap-8 max-w-[1440px] mx-auto">
@@ -483,7 +480,7 @@ return (
             <div className="retro-key bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] border-2 border-[#3a3a3a] rounded p-2 relative">
               <Bell className="w-5 h-5" />
             </div>
-            <button 
+            <button
               onClick={() => setUserDropdownOpen(!userDropdownOpen)}
               className="retro-key flex items-center gap-2 bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] border-2 border-[#3a3a3a] rounded px-3 py-2"
             >
@@ -498,7 +495,7 @@ return (
                   <p className="text-[#2a2a2a] font-bold text-sm">Maurice Moss</p>
                   <p className="text-[#6a6a6a] text-xs">IT Department</p>
                 </div>
-                <button 
+                <button
                   onClick={() => setUserDropdownOpen(false)}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[#e8e0cd] transition-colors text-left"
                 >
@@ -539,7 +536,7 @@ return (
               <div className="text-xs opacity-70 mt-1">Recording in progress...</div>
             )}
           </button>
-          
+
           {/* Permission Error - Displayed prominently */}
           {permissionError && (
             <div className="mt-6 bg-gradient-to-b from-[#f08c8c] to-[#da6a6a] border-3 border-[#8a3a3a] rounded-lg p-4 retro-key">
@@ -650,7 +647,7 @@ return (
           </div>
         )}
       </div>
-      
+
       {/* Dev Mode Indicator */}
       <DevModeIndicator />
 
@@ -682,12 +679,12 @@ function RetroNavButton({ label, active = false, onClick }: RetroNavButtonProps)
   };
 
   return (
-    <button 
+    <button
       onClick={handleClick}
       className={clsx(
         "retro-key px-4 py-2 rounded border-2 font-bold text-sm transition-all flex-shrink-0",
-        active 
-          ? "bg-gradient-to-b from-[#5a8a5a] to-[#4a7a4a] text-white border-[#2a4a2a]" 
+        active
+          ? "bg-gradient-to-b from-[#5a8a5a] to-[#4a7a4a] text-white border-[#2a4a2a]"
           : "bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] text-[#2a2a2a] border-[#3a3a3a]",
         isPressed && "retro-key-pressed"
       )}

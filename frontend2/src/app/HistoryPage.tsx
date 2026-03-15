@@ -1,6 +1,6 @@
 /**
  * HistoryPage Component
- * 
+ *
  * Displays historical assessment records with retro office filing cabinet aesthetic.
  * Shows past scores, dates, and allows filtering/sorting.
  */
@@ -56,19 +56,18 @@ const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   };
 
 return (
-    // 添加了 relative 和 overflow-hidden
     <div className="relative min-h-screen retro-beige-bg text-[#2a2a2a] font-['Share_Tech_Mono',monospace] overflow-hidden">
-      
-      {/* 统一的背景纹理 */}
+
+      {/* Background texture */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-10">
-        <ImageWithFallback 
+        <ImageWithFallback
           src="https://images.unsplash.com/photo-1765734482991-7c60829a0bff?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aW50YWdlJTIwb2ZmaWNlJTIwZGVzayUyMDE5ODBzfGVufDF8fHx8MTc3MzQ4MDQzNXww&ixlib=rb-4.1.0&q=80&w=1080"
           alt="Office texture"
           className="absolute w-full h-full object-cover"
         />
       </div>
 
-      {/* 使用 relative z-10 确保内容在背景之上 */}
+      {/* Content layer */}
       <div className="relative z-10">
         <header className="bg-gradient-to-b from-[#8a7a5f] to-[#6a5a4f] border-b-4 border-[#3a3a3a] py-3 px-8 retro-shadow">
         <div className="flex items-center justify-between gap-8 max-w-[1440px] mx-auto">
@@ -103,7 +102,7 @@ return (
             <div className="retro-key bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] border-2 border-[#3a3a3a] rounded p-2 relative">
               <Bell className="w-5 h-5" />
             </div>
-            <button 
+            <button
               onClick={() => setUserDropdownOpen(!userDropdownOpen)}
               className="retro-key flex items-center gap-2 bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] border-2 border-[#3a3a3a] rounded px-3 py-2"
             >
@@ -118,7 +117,7 @@ return (
                   <p className="text-[#2a2a2a] font-bold text-sm">Maurice Moss</p>
                   <p className="text-[#6a6a6a] text-xs">IT Department</p>
                 </div>
-                <button 
+                <button
                   onClick={() => setUserDropdownOpen(false)}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[#e8e0cd] transition-colors text-left"
                 >
@@ -130,7 +129,7 @@ return (
           </div>
         </div>
       </header>
-      
+
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-6 py-8">
         {/* Filing Cabinet Header */}
@@ -250,12 +249,12 @@ function RetroNavButton({ label, active = false, onClick }: RetroNavButtonProps)
   };
 
   return (
-    <button 
+    <button
       onClick={handleClick}
       className={clsx(
         "retro-key px-4 py-2 rounded border-2 font-bold text-sm transition-all flex-shrink-0",
-        active 
-          ? "bg-gradient-to-b from-[#5a8a5a] to-[#4a7a4a] text-white border-[#2a4a2a]" 
+        active
+          ? "bg-gradient-to-b from-[#5a8a5a] to-[#4a7a4a] text-white border-[#2a4a2a]"
           : "bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] text-[#2a2a2a] border-[#3a3a3a]",
         isPressed && "retro-key-pressed"
       )}

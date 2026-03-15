@@ -24,7 +24,7 @@ def build_response(status_code, body):
     }
 
 def lambda_handler(event, context):
-    # 🛡️ 依然是咱们昨晚血战过的 CORS OPTIONS 拦截器
+    # CORS OPTIONS interceptor
     http_method = event.get('httpMethod') or event.get('requestContext', {}).get('http', {}).get('method', '')
     if http_method == 'OPTIONS':
         return build_response(200, {})
@@ -39,18 +39,18 @@ def lambda_handler(event, context):
         table_name = os.environ['DYNAMODB_TABLE_NAME']
         table = dynamodb.Table(table_name)
 
-        # 🚀 核心查询逻辑
+        # Core query logic
         response = table.query(
             KeyConditionExpression=Key('userId').eq(user_id),
-            ScanIndexForward=False,  # False 代表降序（时间倒序），最新的记录排在最前面！
-            Limit=20                 # 为了前端性能，最多只取最近的 20 条历史记录
+            ScanIndexForward=False,  # False for descending order (newest first)
+            Limit=20                 # Retrieve latest 20 records for frontend performance
         )
 
         items = response.get('Items', [])
-        
-        # 成功返回历史数组
+
+        # Return history array
         return build_response(200, {"history": items})
 
     except Exception as e:
-        print(f"❌ 读取历史记录失败: {str(e)}")
+        print(f"Failed to read history: {str(e)}")
         return build_response(500, {"error": "Internal server error", "details": str(e)})

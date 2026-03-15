@@ -50,7 +50,6 @@ const PHONEMES_UK = [
   { p: '/ʒ/', w: 'vision', s: 'none', ex: 'vision' },
   { p: '/tʃ/', w: 'chin', s: 'none', ex: 'chin' },
   { p: '/dʒ/', w: 'jump', s: 'none', ex: 'jump' },
-// 👇 在这里追加缺失的 8 个辅音，凑齐 24 个辅音
   { p: '/m/', w: 'man', s: 'none', ex: 'man' },
   { p: '/n/', w: 'now', s: 'none', ex: 'now' },
   { p: '/ŋ/', w: 'sing', s: 'none', ex: 'sing' },
@@ -135,27 +134,27 @@ const PHONEME_ALIASES: Record<string, string[]> = {
   '/ɔː/': ['ao'],            // saw
   '/ʊ/': ['uh'],             // put
   '/uː/': ['uw'],            // too
-  
+
   '/ʌ/': ['ah'],             // cut
   '/ɜː/': ['er'],            // bird
   '/ə/':  ['ax', 'ah'],      // about
-  
+
   '/eɪ/': ['ey'],            // say
   '/aɪ/': ['ay'],            // my
   '/ɔɪ/': ['oy'],            // boy
   '/aʊ/': ['aw'],            // how
   '/əʊ/': ['ow'],            // no
-  
+
   '/ɪə/': ['ih', 'ir'],      // near
   '/eə/': ['eh', 'er'],      // hair
   '/ʊə/': ['uh', 'ur'],      // tour
 
   '/p/': ['p'],
   '/b/': ['b'],
-  '/t/': ['t'], 
+  '/t/': ['t'],
   '/d/': ['d'],
   '/k/': ['k'],
-  '/g/': ['g'],             
+  '/g/': ['g'],
   '/f/': ['f'],
   '/v/': ['v'],
   '/θ/': ['th'],             // thin
@@ -170,18 +169,18 @@ const PHONEME_ALIASES: Record<string, string[]> = {
   '/n/': ['n'],
   '/ŋ/': ['ng'],             // sing
   '/l/': ['l'],
-  '/r/': ['r'], 
-  '/j/': ['y'],              
+  '/r/': ['r'],
+  '/j/': ['y'],
   '/w/': ['w'],
-  '/h/': ['hh'] 
+  '/h/': ['hh']
 };
 
 /**
  * PhonemeKey Component
- * 
+ *
  * Displays a single phoneme as a clickable keyboard-style button.
  * Features 3D press-down effect and color-coding by practice status.
- * 
+ *
  * Props:
  * @param phoneme - IPA phoneme symbol (e.g., "/iː/")
  * @param word - Example word containing the phoneme
@@ -199,14 +198,14 @@ interface PhonemeKeyProps {
 
 const PhonemeKey = ({ phoneme, word, state, isSelected, onClick }: PhonemeKeyProps) => {
   const [isPressed, setIsPressed] = useState(false);
-  
+
   const colors: Record<string, string> = {
     none: "bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8]",
     excellent: "bg-gradient-to-b from-[#7fdb9f] to-[#5fc77f]",
     good: "bg-gradient-to-b from-[#f0e68c] to-[#dac86a]",
     poor: "bg-gradient-to-b from-[#ea9999] to-[#d67676]",
   };
-  
+
   const borderColors: Record<string, string> = {
     none: "border-[#3a3a3a]",
     excellent: "border-[#3a6b4a]",
@@ -221,12 +220,11 @@ const PhonemeKey = ({ phoneme, word, state, isSelected, onClick }: PhonemeKeyPro
   };
 
 return (
-    <button 
+    <button
       onClick={handleClick}
       className={clsx(
-        // 把 min-h-[60px] 换成了 w-[75px] h-[75px]，并加上 p-0 去除可能的内边距干扰
         "retro-key rounded border-2 text-center font-['Share_Tech_Mono',monospace] transition-all cursor-pointer w-[75px] h-[75px] p-0 flex flex-col items-center justify-center relative",
-        colors[state], 
+        colors[state],
         borderColors[state],
         isSelected && "ring-4 ring-[#5a8a5a] ring-offset-2 ring-offset-[#d4c5a9] scale-105 z-10",
         isPressed && "retro-key-pressed"
@@ -242,24 +240,21 @@ return (
 export default function StatisticsPage() {
   const navigate = useNavigate();
   const [region, setRegion] = useState<'UK' | 'US'>('UK');
-// 改为数组类型，支持多选
-  const [selectedPhonemes, setSelectedPhonemes] = useState<string[]>(['/θ/']);  
+  const [selectedPhonemes, setSelectedPhonemes] = useState<string[]>(['/θ/']);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [generatedSentence, setGeneratedSentence] = useState('');
   const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
-// 👇 新增：用于独立保存两个固定随机句子的状态
   const [autoSentence1, setAutoSentence1] = useState('');
   const [autoSentence2, setAutoSentence2] = useState('');
 
-// 👇 新增：在页面初次加载时，随机生成一次句子并永久固定
   useEffect(() => {
-    // 从数据源中随机抽取音标
+    // Randomly extract phoneme from data source
     const getRandomPhoneme = () => PHONEMES_UK[Math.floor(Math.random() * PHONEMES_UK.length)];
-    
-    // 给第一个句子随机抽一个词
+
+    // Randomly select one word for the first sentence
     const p1 = getRandomPhoneme();
-    
-    // 给第二个句子随机抽 1~3 个不重复的音标
+
+    // Randomly select 1-3 unique phonemes for the second sentence
     const randomCount = Math.floor(Math.random() * 3) + 1;
     const randomPhonemes = [];
     for (let i = 0; i < randomCount; i++) {
@@ -267,7 +262,7 @@ export default function StatisticsPage() {
     }
     const uniqueRandomPhonemes = Array.from(new Set(randomPhonemes));
 
-    // 设置并固定句子内容
+    // Set and fix sentence content
     setAutoSentence1(`The ${p1.w} sound in "${p1.ex}" needs more practice in the basement.`);
     setAutoSentence2(`Roy says: "Focus on ${uniqueRandomPhonemes.join(', ')}!"`);
   }, []);
@@ -441,17 +436,17 @@ const basePhonemes = region === 'UK' ? PHONEMES_UK : PHONEMES_US;
     ...phoneme,
     s: phonemeStates.get(phoneme.p) || 'none',
   }));
-  
-  // 新增：多选切换函数 (如果已选中则移除，未选中则加入)
+
+  // Toggle function for multi-select (remove if selected, add if not selected)
   const togglePhoneme = (p: string) => {
-    setSelectedPhonemes(prev => 
+    setSelectedPhonemes(prev =>
       prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]
     );
   };
 
-  // 获取所有被选中的音标数据
+  // Get all selected phoneme data
   const selectedDataList = phonemes.filter(p => selectedPhonemes.includes(p.p));
-  const primarySelected = selectedDataList[0]; // 用于在自动生成句子时作为主要参考
+  const primarySelected = selectedDataList[0]; // Used as primary reference during auto-generate sentence
 
   const itCrowdQuotes = [
     "Have you tried turning it off and on again?",
@@ -466,16 +461,16 @@ const basePhonemes = region === 'UK' ? PHONEMES_UK : PHONEMES_US;
 const generateSentence = () => {
     if (selectedPhonemes.length === 0) return;
     const quote = itCrowdQuotes[Math.floor(Math.random() * itCrowdQuotes.length)];
-    // 用逗号拼接所有选中的音标
+    // Join all selected phonemes with comma
     setGeneratedSentence(`Practice ${selectedPhonemes.join(', ')} with: "${quote}"`);
   };
-  
+
   return (
     <div className="relative min-h-screen retro-beige-bg text-[#2a2a2a] font-['Share_Tech_Mono',monospace] overflow-hidden">
-      
+
       {/* Background texture */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-10">
-        <ImageWithFallback 
+        <ImageWithFallback
           src="https://images.unsplash.com/photo-1765734482991-7c60829a0bff?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aW50YWdlJTIwb2ZmaWNlJTIwZGVzayUyMDE5ODBzfGVufDF8fHx8MTc3MzQ4MDQzNXww&ixlib=rb-4.1.0&q=80&w=1080"
           alt="Office texture"
           className="absolute w-full h-full object-cover"
@@ -484,7 +479,7 @@ const generateSentence = () => {
 
       {/* Main Container */}
       <div className="relative z-10 max-w-[1440px] mx-auto">
-        
+
         {/* Header */}
         <header className="bg-gradient-to-b from-[#8a7a5f] to-[#6a5a4f] border-b-4 border-[#3a3a3a] py-3 px-8 retro-shadow">
           <div className="flex items-center justify-between gap-8">
@@ -505,11 +500,11 @@ const generateSentence = () => {
             </div>
 
             {/* Navigation - Horizontally scrollable with custom scrollbar */}
-            <div 
-              className="flex-1 overflow-x-auto max-w-[500px]" 
-              style={{ 
+            <div
+              className="flex-1 overflow-x-auto max-w-[500px]"
+              style={{
                 overflowX: 'scroll',
-                scrollbarWidth: 'thin', 
+                scrollbarWidth: 'thin',
                 scrollbarColor: '#6a5a4f #4a4a3a',
                 WebkitOverflowScrolling: 'touch'
               }}
@@ -518,7 +513,7 @@ const generateSentence = () => {
               <RetroNavButton label="Welcome" onClick={() => navigate('/')} />
               <RetroNavButton label="Practice" onClick={() => navigate('/practice')} />
               <RetroNavButton label="Statistics" active />
-              {/* 新增 History 跳转 */}
+              {/* Navigation to History */}
               <RetroNavButton label="History" onClick={() => navigate('/history')} />
             </div>            </div>
 
@@ -530,9 +525,9 @@ const generateSentence = () => {
                   <span className="text-white text-[8px] font-bold">1</span>
                 </div>
               </div>
-              
+
               {/* User Dropdown Button */}
-              <button 
+              <button
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                 className="retro-key flex items-center gap-2 bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] border-2 border-[#3a3a3a] rounded px-3 py-2"
               >
@@ -541,7 +536,7 @@ const generateSentence = () => {
                   <path d={svgPaths.p3e42a480} />
                 </svg>
               </button>
-              
+
               {/* Dropdown Menu */}
               {userDropdownOpen && (
                 <div className="absolute right-0 top-full mt-2 bg-[#f5f3e8] border-2 border-[#3a3a3a] rounded retro-shadow z-50 min-w-[180px]">
@@ -549,7 +544,7 @@ const generateSentence = () => {
                     <p className="text-[#2a2a2a] font-bold text-sm">Maurice Moss</p>
                     <p className="text-[#6a6a6a] text-xs">IT Department</p>
                   </div>
-                  <button 
+                  <button
                     onClick={() => {
                       setUserDropdownOpen(false);
                       // Handle logout
@@ -567,21 +562,21 @@ const generateSentence = () => {
 
         {/* Main Content */}
         <div className="px-8 py-6">
-          
+
 {/* Vowels & Consonants Info */}
-          {/* 外层加上 overflow-x-auto 允许横向滚动，并加上复古滚动条样式 */}
-          <div 
+          {/* Outer container with horizontal scrolling and retro scrollbar */}
+          <div
             className="mb-4 retro-paper border-2 border-[#3a3a3a] rounded py-3 px-5 text-sm overflow-x-auto"
             style={{ scrollbarWidth: 'thin', scrollbarColor: '#8a7a5f transparent' }}
           >
-            {/* 增加 min-w-max 保证内容无论多长，内部容器都能被撑开，右侧不会留白截断 */}
+            {/* Ensure inner container expands with content width */}
             <div className="min-w-max pr-4">
-              
+
               {/* Vowels Section */}
               <div className="mb-2">
                 <h3 className="font-bold text-[#2a2a2a] mb-0.5 text-base uppercase tracking-wider">Vowels</h3>
-                
-                {/* 每一个 <p> 标签都加上了 whitespace-nowrap 强制不换行 */}
+
+                {/* Each <p> tag has whitespace-nowrap to prevent line wrapping */}
                 <p className="text-[#4a4a4a] leading-relaxed whitespace-nowrap">
                   <span className="font-bold inline-block w-[75px]">UK IPA:</span> /iː/ /ɪ/ /e/ /æ/; /ʌ/ /ɜː/ /ə/; /ɑː/ /ɒ/ /ɔː/ /ʊ/ /uː/; /eɪ/ /ɔɪ/ /aɪ/; /aʊ/ /əʊ/; /ɪə/ /eə/ /ʊə/;
                 </p>
@@ -595,12 +590,12 @@ const generateSentence = () => {
                   <span className="font-bold inline-block w-[75px]">E.g.:</span> s<b className="text-[#1a1a1a] font-black">ee</b> s<b className="text-[#1a1a1a] font-black">i</b>t b<b className="text-[#1a1a1a] font-black">e</b>d c<b className="text-[#1a1a1a] font-black">a</b>t; c<b className="text-[#1a1a1a] font-black">u</b>t b<b className="text-[#1a1a1a] font-black">ir</b>d <b className="text-[#1a1a1a] font-black">a</b>bout; f<b className="text-[#1a1a1a] font-black">a</b>ther d<b className="text-[#1a1a1a] font-black">o</b>g s<b className="text-[#1a1a1a] font-black">aw</b> p<b className="text-[#1a1a1a] font-black">u</b>t t<b className="text-[#1a1a1a] font-black">oo</b>; s<b className="text-[#1a1a1a] font-black">ay</b> b<b className="text-[#1a1a1a] font-black">oy</b> m<b className="text-[#1a1a1a] font-black">y</b>; h<b className="text-[#1a1a1a] font-black">ow</b> n<b className="text-[#1a1a1a] font-black">o</b>; n<b className="text-[#1a1a1a] font-black">ear</b> h<b className="text-[#1a1a1a] font-black">air</b> t<b className="text-[#1a1a1a] font-black">our</b>;
                 </p>
               </div>
-              
+
               {/* Consonants Section */}
               <div>
                 <h3 className="font-bold text-[#2a2a2a] mb-0.5 text-base uppercase tracking-wider">Consonants</h3>
-                
-                {/* 同样加上 whitespace-nowrap */}
+
+                {/* Also add whitespace-nowrap */}
                 <p className="text-[#4a4a4a] leading-relaxed whitespace-nowrap">
                   <span className="font-bold inline-block w-[110px]">UK/US IPA:</span> /p/ /b/, /t/ /d/, /k/ /g/; /f/ /v/, /θ/ /ð/, /s/ /z/, /ʃ/ /ʒ/; /tʃ/ /dʒ/; /m/ /n/ /ŋ/; /l/ /r//ɹ/ /j/ /w/; /h/;
                 </p>
@@ -614,13 +609,13 @@ const generateSentence = () => {
 
             </div>
           </div>
-          
+
                     {/* Periodic Table Grid */}
           <div className="grid grid-cols-[151px_1fr_455px] gap-3 mb-6 items-end">
-            
+
 {/* LEFT COLUMN - Legend */}
             <div className="flex flex-col gap-0.5">
-              
+
               {/* Excellent */}
               <div className="grid grid-cols-2 gap-0.5">
                 <div className="retro-key rounded border-2 border-[#3a6b4a] text-center font-['Share_Tech_Mono',monospace] w-[75px] h-[75px] p-0 flex flex-col items-center justify-center relative bg-gradient-to-b from-[#7fdb9f] to-[#5fc77f]">
@@ -628,7 +623,7 @@ const generateSentence = () => {
                 </div>
                 <div className="bg-transparent"></div>
               </div>
-              
+
               {/* Good + Poor */}
               <div className="grid grid-cols-2 gap-0.5">
                 <div className="retro-key rounded border-2 border-[#6b5f3a] text-center font-['Share_Tech_Mono',monospace] w-[75px] h-[75px] p-0 flex flex-col items-center justify-center relative bg-gradient-to-b from-[#f0e68c] to-[#dac86a]">
@@ -641,24 +636,24 @@ const generateSentence = () => {
 
               {/* UK IPA + US IPA Toggle */}
               <div className="grid grid-cols-2 gap-0.5">
-                <button 
+                <button
                   onClick={() => setRegion('UK')}
                   className={clsx(
                     "retro-key rounded border-2 text-center font-['Share_Tech_Mono',monospace] transition-all cursor-pointer w-[75px] h-[75px] p-0 flex flex-col items-center justify-center relative active:retro-key-pressed",
-                    region === 'UK' 
-                      ? "bg-gradient-to-br from-[#5a8a8a] to-[#4a7a7a] text-white border-[#2a4a4a]" 
+                    region === 'UK'
+                      ? "bg-gradient-to-br from-[#5a8a8a] to-[#4a7a7a] text-white border-[#2a4a4a]"
                       : "bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] text-[#2a2a2a] border-[#3a3a3a]"
                   )}
                 >
                   <span className="text-base font-bold block relative z-10">UK</span>
                   <span className="text-[9px] block mt-1 opacity-70 relative z-10">IPA</span>
                 </button>
-                <button 
+                <button
                   onClick={() => setRegion('US')}
                   className={clsx(
                     "retro-key rounded border-2 text-center font-['Share_Tech_Mono',monospace] transition-all cursor-pointer w-[75px] h-[75px] p-0 flex flex-col items-center justify-center relative active:retro-key-pressed",
-                    region === 'US' 
-                      ? "bg-gradient-to-br from-[#7a9aca] to-[#6a8aba] text-white border-[#3a5a7a]" 
+                    region === 'US'
+                      ? "bg-gradient-to-br from-[#7a9aca] to-[#6a8aba] text-white border-[#3a5a7a]"
                       : "bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] text-[#2a2a2a] border-[#3a3a3a]"
                   )}
                 >
@@ -666,17 +661,17 @@ const generateSentence = () => {
                   <span className="text-[9px] block mt-1 opacity-70 relative z-10">IPA</span>
                 </button>
               </div>
-            
 
-{/* Functional Phoneme Grids (8 个双元音) */}
+
+{/* Functional Phoneme Grids (8 diphthongs) */}
               <div className="grid grid-cols-2 gap-0.5 mt-0.5 flex-1">
-                {/* 从 phonemes 中截取 10 个音标渲染，确保和右边具有相同的功能与形状 */}
+                {/* Extract 10 phonemes from phonemes list for rendering */}
                 {phonemes.slice(12, 20).map((p, idx) => (
-                  <PhonemeKey 
+                  <PhonemeKey
                     key={idx}
-                    phoneme={p.p} 
-                    word={p.w} 
-                    state={p.s} 
+                    phoneme={p.p}
+                    word={p.w}
+                    state={p.s}
 isSelected={selectedPhonemes.includes(p.p)}
   onClick={() => togglePhoneme(p.p)}
                     />
@@ -696,7 +691,7 @@ isSelected={selectedPhonemes.includes(p.p)}
                     </h2>
                     <p className="crt-text opacity-70 text-[9px] mt-0.5">(Based on stats: Last 3 months)</p>
                   </div>
-                  
+
                   {/* Content */}
                   <div className="flex-1 p-3 flex items-center justify-center overflow-hidden">
 {selectedPhonemes.length > 0 ? (
@@ -742,21 +737,21 @@ isSelected={selectedPhonemes.includes(p.p)}
 
 {/* RIGHT COLUMN - Phoneme Grid */}
             <div className="flex flex-col items-end gap-0.5">
-              
-{/* 完美统一外观的黄色 Good 方块 */}
+
+{/* Perfect unified yellow Good block */}
               <div className="retro-key rounded border-2 border-[#6b5f3a] text-center font-['Share_Tech_Mono',monospace] w-[75px] h-[75px] p-0 flex flex-col items-center justify-center relative bg-gradient-to-b from-[#f0e68c] to-[#dac86a]">
                 <span className="text-sm font-bold block text-[#2a2a2a]">Good</span>
               </div>
 
-{/* 原有的 6x6 网格：前 12 个是单元音，后 24 个是辅音 */}
+{/* Original 6x6 grid: first 12 are monophthongs, last 24 are consonants */}
               <div className="grid grid-cols-6 gap-0.5 content-start">
-                {/* 使用扩展运算符拼接：前 12 个单元音 + 后 24 个辅音 */}
+                {/* Concatenate using spread operator: first 12 monophthongs + last 24 consonants */}
                 {[...phonemes.slice(0, 12), ...phonemes.slice(20, 44)].map((p, idx) => (
-                  <PhonemeKey 
-                    key={idx} 
-                    phoneme={p.p} 
-                    word={p.w} 
-                    state={p.s} 
+                  <PhonemeKey
+                    key={idx}
+                    phoneme={p.p}
+                    word={p.w}
+                    state={p.s}
 isSelected={selectedPhonemes.includes(p.p)}
   onClick={() => togglePhoneme(p.p)}
                     />
@@ -766,17 +761,17 @@ isSelected={selectedPhonemes.includes(p.p)}
                       </div>
 {/* Action Buttons */}
           <div className="flex items-center gap-3 mb-4">
-            <button 
+            <button
               onClick={() => navigate('/practice')}
               className="retro-key bg-gradient-to-b from-[#7fdb9f] to-[#5fc77f] border-2 border-[#3a6b4a] text-[#2a2a2a] px-6 py-2 rounded font-bold text-sm"
             >
               Go Practice
             </button>
-            <button 
+            <button
               onClick={generateSentence}
-              // 下面这行多加了一个 disabled:opacity-50 让它置灰时更明显
+              // This line added disabled:opacity-50 to make it more visible when grayed out
               className="retro-key bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] border-2 border-[#3a3a3a] text-[#2a2a2a] px-6 py-2 rounded font-bold text-sm flex-1 disabled:opacity-50"
-              disabled={selectedPhonemes.length === 0} // 👈 改成判断数组长度
+              disabled={selectedPhonemes.length === 0} // Check array length
             >
               Generate a sentence from your selected
             </button>
@@ -792,21 +787,21 @@ isSelected={selectedPhonemes.includes(p.p)}
             </div>
           )}
 
-{/* Auto-Generated Sentences (已与上方方块脱钩，固定显示) */}
+{/* Auto-Generated Sentences (decoupled from blocks above, fixed display) */}
           <div className="space-y-2">
             <div className="text-[#2a2a2a] font-bold text-sm mb-2">
               Auto-Generated Practice Sentences:
             </div>
-            {/* 只有在随机句子生成完毕后才渲染 */}
+            {/* Only render after random sentences are generated */}
             {autoSentence1 && autoSentence2 && (
               <>
-                <SentenceRow 
-                  label="Auto Sentence 1" 
+                <SentenceRow
+                  label="Auto Sentence 1"
                   text={autoSentence1}
                   onPractice={() => navigate('/practice')}
                 />
-                <SentenceRow 
-                  label="Auto Sentence 2" 
+                <SentenceRow
+                  label="Auto Sentence 2"
                   text={autoSentence2}
                   onPractice={() => navigate('/practice')}
                 />
@@ -843,12 +838,12 @@ function RetroNavButton({ label, active = false, onClick }: RetroNavButtonProps)
   };
 
   return (
-    <button 
+    <button
       onClick={handleClick}
       className={clsx(
         "retro-key px-4 py-2 rounded border-2 font-bold text-sm transition-all flex-shrink-0",
-        active 
-          ? "bg-gradient-to-b from-[#5a8a5a] to-[#4a7a4a] text-white border-[#2a4a2a]" 
+        active
+          ? "bg-gradient-to-b from-[#5a8a5a] to-[#4a7a4a] text-white border-[#2a4a2a]"
           : "bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] text-[#2a2a2a] border-[#3a3a3a]",
         isPressed && "retro-key-pressed"
       )}
@@ -873,7 +868,7 @@ function SentenceRow({ label, text, onPractice }: SentenceRowProps) {
       <div className="flex-1 text-sm text-[#4a4a4a]">
         {text}
       </div>
-      <button 
+      <button
         onClick={onPractice}
         className="retro-key bg-gradient-to-b from-[#7fdb9f] to-[#5fc77f] border-2 border-[#3a6b4a] text-[#2a2a2a] px-4 py-2 font-bold text-sm rounded"
       >

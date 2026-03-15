@@ -23,7 +23,7 @@ def lambda_handler(event, context):
 
         if not file_name or not user_id:
             return build_response(400, {"error": "Missing fileName or userId parameters"})
-        
+
         # 2. Read configuration from environment variables
         bucket_name = os.environ['S3_BUCKET_NAME']
         speech_key = os.environ['SPEECH_KEY']
@@ -36,7 +36,7 @@ def lambda_handler(event, context):
 
         # 4. Construct Header
         pronAssessmentParamsJson = json.dumps({
-            "ReferenceText": reference_text, 
+            "ReferenceText": reference_text,
             "GradingSystem": "HundredMark",
             "Granularity": "Phoneme",
             "Dimension": "Comprehensive",
@@ -87,7 +87,7 @@ def lambda_handler(event, context):
 
                 weak_words = []
                 weak_phonemes = set()
-                phoneme_scores_map = {} 
+                phoneme_scores_map = {}
 
                 for word_obj in words_data:
 
@@ -99,11 +99,11 @@ def lambda_handler(event, context):
 
                         p = phoneme_obj.get('Phoneme', '')
                         p_score = phoneme_obj.get('AccuracyScore', 100)
-                        
+
 
                         if not p:
                             continue
-                            
+
 
                         if p_score < 80:
                             weak_phonemes.add(p)
@@ -113,9 +113,7 @@ def lambda_handler(event, context):
                         else:
                             phoneme_scores_map[p] = int(p_score)
 
-                topic_text = body.get('topic') or body.get('topicText') or 'General'
-
-                # 写入 DynamoDB
+                # Write to DynamoDB
                 table = dynamodb.Table(table_name)
                 table.put_item(
                     Item={
@@ -129,8 +127,8 @@ def lambda_handler(event, context):
                         'recognizedText': recognized_text,
                         'topic': topic_text,
                         'weakWords': weak_words,
-                        'weakPhonemes': list(weak_phonemes), 
-                        'phonemeScores': phoneme_scores_map 
+                        'weakPhonemes': list(weak_phonemes),
+                        'phonemeScores': phoneme_scores_map
                     }
                 )
                 print(f"✅ History record successfully written to DynamoDB, weak phonemes: {list(set(weak_phonemes))}")

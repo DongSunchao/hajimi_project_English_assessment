@@ -1,9 +1,9 @@
 /**
  * WelcomePage Component
- * 
+ *
  * Landing page for the Reynholm Industries Speech Practice Application.
  * Features a retro 80s office aesthetic with IT Crowd theme.
- * 
+ *
  * Design Elements:
  * - Beige gradient background (80s office style)
  * - CRT monitor display for welcome message
@@ -13,7 +13,7 @@
 
 import { useNavigate } from 'react-router';
 import { ImageWithFallback } from './components/figma/ImageWithFallback';
-import React, { useState } from 'react'; // 加上 useState
+import React, { useState } from 'react';
 import { Bell, LogOut } from 'lucide-react';
 import { clsx } from 'clsx';
 import svgPaths from "../imports/svg-ubr093inv5";
@@ -24,9 +24,9 @@ export default function WelcomePage() {
 const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 return (
     <div className="relative min-h-screen retro-beige-bg text-[#2a2a2a] font-['Share_Tech_Mono',monospace] overflow-hidden">
-      
+
       <div className="fixed inset-0 z-0 pointer-events-none opacity-10">
-        <ImageWithFallback 
+        <ImageWithFallback
           src="https://images.unsplash.com/photo-1765734482991-7c60829a0bff?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aW50YWdlJTIwb2ZmaWNlJTIwZGVzayUyMDE5ODBzfGVufDF8fHx8MTc3MzQ4MDQzNXww&ixlib=rb-4.1.0&q=80&w=1080"
           alt="Office texture"
           className="absolute w-full h-full object-cover"
@@ -65,7 +65,7 @@ return (
               <div className="retro-key bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] border-2 border-[#3a3a3a] rounded p-2 relative">
                 <Bell className="w-5 h-5" />
               </div>
-              <button 
+              <button
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                 className="retro-key flex items-center gap-2 bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] border-2 border-[#3a3a3a] rounded px-3 py-2"
               >
@@ -80,7 +80,7 @@ return (
                     <p className="text-[#2a2a2a] font-bold text-sm">Maurice Moss</p>
                     <p className="text-[#6a6a6a] text-xs">IT Department</p>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setUserDropdownOpen(false)}
                     className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[#e8e0cd] transition-colors text-left"
                   >
@@ -95,7 +95,7 @@ return (
       </div>
 
       <div className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-100px)] p-4">
-        
+
         <div className="mb-8 text-center">
           <div className="w-24 h-24 mx-auto mb-4 border-4 border-[#3a3a3a] rounded-full bg-gradient-to-b from-[#f5f3e8] to-[#d4cbb8] flex items-center justify-center retro-shadow">
             <span className="text-[#3a3a3a] font-bold text-5xl">R</span>
@@ -126,7 +126,7 @@ return (
         </div>
 
         <div className="flex flex-col md:flex-row gap-6 mb-8 w-full max-w-2xl">
-          <button 
+          <button
             onClick={() => navigate('/practice')}
             className="retro-key flex-1 bg-gradient-to-b from-[#7fdb9f] to-[#5fc77f] border-3 border-[#3a6b4a] text-[#2a2a2a] font-bold py-6 px-8 rounded-lg text-lg hover:scale-105 transition-transform"
           >
@@ -134,7 +134,7 @@ return (
             <div>START PRACTICE</div>
             <div className="text-xs opacity-70 mt-1">Begin voice training session</div>
           </button>
-          <button 
+          <button
             onClick={() => navigate('/statistics')}
             className="retro-key flex-1 bg-gradient-to-b from-[#f0e68c] to-[#dac86a] border-3 border-[#6b5f3a] text-[#2a2a2a] font-bold py-6 px-8 rounded-lg text-lg hover:scale-105 transition-transform"
           >
@@ -199,18 +199,18 @@ function RetroNavButton({ label, active = false, onClick }: RetroNavButtonProps)
   };
 
   return (
-    <button 
+    <button
       onClick={handleClick}
       className={clsx(
         "retro-key px-4 py-2 rounded border-2 font-bold text-sm transition-all flex-shrink-0",
-        active 
-          ? "bg-gradient-to-b from-[#5a8a5a] to-[#4a7a4a] text-white border-[#2a4a2a]" 
+        active
+          ? "bg-gradient-to-b from-[#5a8a5a] to-[#4a7a4a] text-white border-[#2a4a2a]"
           : "bg-gradient-to-b from-[#e8e0cd] to-[#d4cbb8] text-[#2a2a2a] border-[#3a3a3a]",
         isPressed && "retro-key-pressed"
       )}
     >
       {label}
     </button>
-    
+
   );
 }
