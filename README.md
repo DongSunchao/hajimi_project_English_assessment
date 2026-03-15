@@ -52,9 +52,9 @@ QR:
 - ElevenLabs API — Voice Cloning & Neural TTS
 
 
-## how to compile the cpp optimizer:
+# how to compile the cpp optimizer:
 
-# PowerShell (backtick line break) or write directly on one line:
+## PowerShell (backtick line break) or write directly on one line:
 ```powershell
 emcc audio_engine.cpp -o audio_engine.js `
   -O3 `
