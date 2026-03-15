@@ -121,24 +121,24 @@ const scoreToState = (score: number): PhonemeState => {
 const normalizePhoneme = (value: string): string => {
   return value
     .toLowerCase()
-    .replace(/[^a-z]/g, ''); // 极度暴力：非 a-z 的英文字母全部删掉！
+    .replace(/[^a-z]/g, '');
 };
 
 const PHONEME_ALIASES: Record<string, string[]> = {
-  // === Vowels (ARPAbet 元音) ===
+  // === Vowels ===
   '/iː/': ['iy', 'i'],       // see
   '/ɪ/': ['ih'],             // sit
   '/e/': ['eh'],             // bed
   '/æ/': ['ae'],             // cat
   '/ɑː/': ['aa'],            // father
-  '/ɒ/': ['aa', 'ao', 'ah'], // dog (美音常发 aa 或 ao)
+  '/ɒ/': ['aa', 'ao', 'ah'], // dog
   '/ɔː/': ['ao'],            // saw
   '/ʊ/': ['uh'],             // put
   '/uː/': ['uw'],            // too
   
-  '/ʌ/': ['ah'],             // cut (终于不用管那个该死的 \u028c 了！)
+  '/ʌ/': ['ah'],             // cut
   '/ɜː/': ['er'],            // bird
-  '/ə/':  ['ax', 'ah'],      // about (SAPI 里弱读元音是 ax)
+  '/ə/':  ['ax', 'ah'],      // about
   
   '/eɪ/': ['ey'],            // say
   '/aɪ/': ['ay'],            // my
@@ -146,18 +146,16 @@ const PHONEME_ALIASES: Record<string, string[]> = {
   '/aʊ/': ['aw'],            // how
   '/əʊ/': ['ow'],            // no
   
-  // 英音的集中双元音，美音 SAPI 通常拆分成 元音 + r
   '/ɪə/': ['ih', 'ir'],      // near
   '/eə/': ['eh', 'er'],      // hair
   '/ʊə/': ['uh', 'ur'],      // tour
 
-  // === Consonants (ARPAbet 辅音) ===
   '/p/': ['p'],
   '/b/': ['b'],
   '/t/': ['t'], 
   '/d/': ['d'],
   '/k/': ['k'],
-  '/g/': ['g'],              // 绝不会再出现奇怪的 ɡ 编码
+  '/g/': ['g'],             
   '/f/': ['f'],
   '/v/': ['v'],
   '/θ/': ['th'],             // thin
@@ -173,9 +171,9 @@ const PHONEME_ALIASES: Record<string, string[]> = {
   '/ŋ/': ['ng'],             // sing
   '/l/': ['l'],
   '/r/': ['r'], 
-  '/j/': ['y'],              // yes (ARPAbet 中用 y)
+  '/j/': ['y'],              
   '/w/': ['w'],
-  '/h/': ['hh']              // 🌟 注意：SAPI 里 h 的代码是 hh
+  '/h/': ['hh'] 
 };
 
 /**
